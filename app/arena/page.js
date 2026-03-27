@@ -399,28 +399,43 @@ export default function ArenaPage() {
       // Check end
       if (!gs.over && (gs.p1.hp <= 0 || gs.p2.hp <= 0 || gs.time <= 0)) {
         gs.over = true;
+        // STOP LOOP IMMEDIATELY — prevents canvas being cleared every frame during KO
+        cancelAnimationFrame(rafRef.current);
+        window.removeEventListener('keydown', onKey);
+
         const w = gs.p1.hp > gs.p2.hp ? 'P1' : gs.p2.hp > gs.p1.hp ? 'P2' : 'DRAW';
         if (w === 'P1') setP1Wins(v => v + 1);
         if (w === 'P2') setP2Wins(v => v + 1);
-        // Flash + KO text
+
+        // Draw one clean final frame
+        ctx.clearRect(0, 0, W, H); drawArena();
+        drawChar(ctx, gs.p1.char, W * 0.27, H * 0.7, 1, frameRef.current, gs.p1.hp <= 0 ? 'hurt' : 'idle');
+        drawChar(ctx, gs.p2.char, W * 0.73, H * 0.7, -1, frameRef.current, gs.p2.hp <= 0 ? 'hurt' : 'idle');
+        drawHUD();
+
+        // White flash
         let fl = 0;
         const fi = setInterval(() => {
-          ctx.fillStyle = `rgba(255,255,255,${0.55 - fl * 0.1})`;
+          ctx.fillStyle = `rgba(255,255,255,${Math.max(0, 0.6 - fl * 0.12)})`;
           ctx.fillRect(0, 0, W, H); fl++;
           if (fl > 5) clearInterval(fi);
-        }, 75);
+        }, 80);
+
+        // KO screen
         setTimeout(() => {
-          ctx.fillStyle = 'rgba(0,0,0,0.78)'; ctx.fillRect(0, 0, W, H);
+          ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillRect(0, 0, W, H);
           ctx.textAlign = 'center';
           const koT = gs.p1.hp <= 0 || gs.p2.hp <= 0 ? 'K.O.' : 'TIME!';
-          ctx.font = 'bold 96px Rajdhani,Inter,sans-serif';
-          ctx.fillStyle = '#ef4444'; ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 40;
-          ctx.fillText(koT, W / 2, H / 2 + 16);
-          ctx.shadowBlur = 0; ctx.font = 'bold 34px Rajdhani,Inter';
-          ctx.fillStyle = 'white';
-          ctx.fillText(w === 'DRAW' ? 'DRAW!' : w + ' WINS!', W / 2, H / 2 + 62);
-          setTimeout(() => setWinner(w), 1600);
-        }, 380);
+          ctx.font = 'bold 100px Rajdhani,Inter,sans-serif';
+          ctx.fillStyle = '#ef4444'; ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 45;
+          ctx.fillText(koT, W / 2, H / 2 - 10);
+          ctx.shadowBlur = 0;
+          ctx.font = 'bold 36px Rajdhani,Inter,sans-serif'; ctx.fillStyle = 'white';
+          ctx.fillText(w === 'DRAW' ? '🤝 DRAW!' : `${w === 'P1' ? gs.p1.char.name : gs.p2.char.name} WINS!`, W / 2, H / 2 + 45);
+          ctx.font = '18px Inter'; ctx.fillStyle = '#f59e0b';
+          ctx.fillText(w === 'P1' ? `+${betAmount} $DMX earned` : w === 'P2' ? `-${betAmount} $DMX lost` : '', W / 2, H / 2 + 85);
+          setTimeout(() => setWinner(w), 2200);
+        }, 500);
       }
     }
     rafRef.current = requestAnimationFrame(loop);
