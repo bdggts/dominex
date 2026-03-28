@@ -222,12 +222,15 @@ export default function ArenaPage() {
       const canvas = canvasRef.current;
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
-      const W2 = canvas.offsetWidth  || window.innerWidth  || 800;
-      const H2 = canvas.offsetHeight > 80 ? canvas.offsetHeight : (window.innerHeight - 120) || 450;
+      // Use window dimensions directly — most reliable across all browsers/devices
+      const W2 = window.innerWidth  || 800;
+      const H2 = window.innerHeight || 600;
       canvas.width  = W2;
       canvas.height = H2;
+      canvas.style.width  = W2 + 'px';
+      canvas.style.height = H2 + 'px';
       startGame(canvas, ctx, W2, H2);
-    }, 60);
+    }, 80);
 
     function startGame(canvas, ctx, W, H) {
     if (cancelled) return;
@@ -530,7 +533,7 @@ export default function ArenaPage() {
           style={{ padding: '6px 16px', borderRadius: 8, background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}>✕ Quit</button>
       </div>
 
-      <canvas ref={canvasRef} style={{ flex: 1, display: 'block', width: '100%', height: '100%', minHeight: 0 }} />
+      <canvas ref={canvasRef} style={{ display: 'block', flexShrink: 0 }} />
 
       {/* Mobile buttons */}
       <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 12px', background: 'rgba(0,0,0,0.85)', borderTop: '1px solid rgba(255,255,255,0.06)', gap: 8 }}>
