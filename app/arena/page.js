@@ -335,9 +335,14 @@ export default function ArenaPage() {
         if(stopped)return;
         frame++;
         ctx.clearRect(0,0,W,H);
-        drawArena();
-        drawChar(ctx,gs.p1.char,W*0.27,H*0.7,1,frame,gs.p1.state);
-        drawChar(ctx,gs.p2.char,W*0.73,H*0.7,-1,frame,gs.p2.state);
+        try {
+          drawArena();
+          drawChar(ctx,gs.p1.char,W*0.27,H*0.7,1,frame,gs.p1.state);
+          drawChar(ctx,gs.p2.char,W*0.73,H*0.7,-1,frame,gs.p2.state);
+        } catch(err) {
+          ctx.fillStyle='#ff0000';ctx.font='bold 24px sans-serif';ctx.textAlign='left';
+          ctx.fillText('DRAW ERROR: '+err.message,20,200);
+        }
         gs.particles=gs.particles.filter(function(p){updateParticle(p);drawParticle(ctx,p);return p.life>0;});
         gs.floats.forEach(function(f){
           f.y+=f.vy;f.life-=0.022;
@@ -348,6 +353,11 @@ export default function ArenaPage() {
         });
         gs.floats=gs.floats.filter(function(f){return f.life>0;});
         drawHUD();runCPU();
+        // DEBUG: draw frame counter on canvas
+        ctx.save();
+        ctx.fillStyle='#00ff00';ctx.font='bold 28px monospace';ctx.textAlign='left';
+        ctx.fillText('FRAME:'+frame+' W:'+W+' H:'+H,20,H-40);
+        ctx.restore();
         if(Date.now()-gs.lastSec>=1000){gs.time--;gs.lastSec=Date.now();}
         if(!gs.over&&(gs.p1.hp<=0||gs.p2.hp<=0||gs.time<=0)){
           gs.over=true;
