@@ -9,12 +9,30 @@ var CHARS = [
   { id:'mortis', name:'MORTIS', title:'Death Reaper',  color:'#dc2626', hp:90,  speed:9,  power:10, defense:7,  rarity:'Mythic',    special:'Soul Rip',         moves:{punch:13,kick:19,special:70} },
 ];
 
-function drawChar(ctx, ch, x, groundY, dir, frame, state) {
+// Sound effects via Web Audio API
+var _sndCtx=null;
+function getAudioCtx(){if(!_sndCtx)try{_sndCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}return _sndCtx;}
+function playSound(type){
+  var ac=getAudioCtx();if(!ac)return;
+  var osc=ac.createOscillator(),g=ac.createGain(),n;
+  osc.connect(g);g.connect(ac.destination);
+  if(type==='punch'){osc.type='sawtooth';osc.frequency.setValueAtTime(200,ac.currentTime);osc.frequency.exponentialRampToValueAtTime(80,ac.currentTime+0.08);g.gain.setValueAtTime(0.25,ac.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ac.currentTime+0.08);osc.start();osc.stop(ac.currentTime+0.08);n=ac.createOscillator();var g2=ac.createGain();n.connect(g2);g2.connect(ac.destination);n.type='square';n.frequency.value=90;g2.gain.setValueAtTime(0.15,ac.currentTime);g2.gain.exponentialRampToValueAtTime(0.01,ac.currentTime+0.06);n.start();n.stop(ac.currentTime+0.06);}
+  else if(type==='kick'){osc.type='square';osc.frequency.setValueAtTime(120,ac.currentTime);osc.frequency.exponentialRampToValueAtTime(40,ac.currentTime+0.15);g.gain.setValueAtTime(0.3,ac.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ac.currentTime+0.15);osc.start();osc.stop(ac.currentTime+0.15);}
+  else if(type==='block'){osc.type='triangle';osc.frequency.setValueAtTime(800,ac.currentTime);osc.frequency.exponentialRampToValueAtTime(400,ac.currentTime+0.05);g.gain.setValueAtTime(0.12,ac.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ac.currentTime+0.05);osc.start();osc.stop(ac.currentTime+0.05);}
+  else if(type==='special'){osc.type='sawtooth';osc.frequency.setValueAtTime(100,ac.currentTime);osc.frequency.linearRampToValueAtTime(600,ac.currentTime+0.2);osc.frequency.linearRampToValueAtTime(50,ac.currentTime+0.5);g.gain.setValueAtTime(0.3,ac.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ac.currentTime+0.5);osc.start();osc.stop(ac.currentTime+0.5);}
+  else if(type==='hit'){osc.type='sawtooth';osc.frequency.setValueAtTime(300,ac.currentTime);osc.frequency.exponentialRampToValueAtTime(50,ac.currentTime+0.12);g.gain.setValueAtTime(0.2,ac.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ac.currentTime+0.12);osc.start();osc.stop(ac.currentTime+0.12);}
+  else if(type==='ko'){osc.type='sawtooth';osc.frequency.setValueAtTime(400,ac.currentTime);osc.frequency.exponentialRampToValueAtTime(30,ac.currentTime+0.8);g.gain.setValueAtTime(0.35,ac.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ac.currentTime+0.8);osc.start();osc.stop(ac.currentTime+0.8);}
+}
+
+function drawChar(ctx, ch, x, groundY, dir, frame, state, atkType, atkFrame) {
   var s = dir > 0 ? 1 : -1;
   var bob = Math.sin(frame * 0.08) * 3;
-  var atkOff = state === 'attack' ? 20 * s : 0;
+  var lungeAmt = 0;
+  if(state==='attack'&&atkFrame!==undefined){var af=Math.min(atkFrame,10)/10;lungeAmt=(atkType==='kick'?35:atkType==='special'?50:25)*s*Math.sin(af*Math.PI);}
+  var blockSquash = state==='block'?0.85:1;
   ctx.save();
-  ctx.translate(x + atkOff, groundY + bob);
+  ctx.translate(x + lungeAmt, groundY + bob);
+  ctx.scale(1, blockSquash);
   var g, i, a, fx, scyX;
   if (ch.id === 'kael') {
     ctx.fillStyle = '#7c2d12';
@@ -172,29 +190,44 @@ export default function ArenaPage() {
     var ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    var frame = 0, stopped = false;
+    var frame = 0, stopped = false, shake = 0, combo = 0, lastHitter = null;
     var gs = {
-      p1: { char: p1Char, hp: p1Char.hp, energy: 0, state: 'idle' },
-      p2: { char: p2Char, hp: p2Char.hp, energy: 0, state: 'idle' },
+      p1: { char: p1Char, hp: p1Char.hp, energy: 0, state: 'idle', x: W*0.27, y: 0, vy: 0, atkType: '', atkFrame: 0, hitFlash: 0, combo: 0 },
+      p2: { char: p2Char, hp: p2Char.hp, energy: 0, state: 'idle', x: W*0.73, y: 0, vy: 0, atkType: '', atkFrame: 0, hitFlash: 0, combo: 0 },
       particles: [], floats: [], time: 90, lastSec: Date.now(), over: false
     };
 
     function spawn(x,y,color,n){for(var i=0;i<(n||12);i++)gs.particles.push(makeParticle(x,y,color));}
     function floatDmg(x,y,dmg,color){gs.floats.push({x:x,y:y,dmg:dmg,color:color,life:1.2,vy:-2.5});}
 
+    function doJump(p){if(p.y>=0&&p.state!=='attack'){p.vy=-14;playSound('block');}}
+    function doMove(p,dir){if(p.state==='attack'||gs.over)return;p.x+=dir*6;p.x=Math.max(40,Math.min(W-40,p.x));}
+
     function attack(att,def,move){
       if(att.state!=='idle'||gs.over)return;
-      if(move==='block'){att.state='block';setTimeout(function(){if(att.state==='block')att.state='idle';},480);return;}
+      if(move==='block'){att.state='block';playSound('block');setTimeout(function(){if(att.state==='block')att.state='idle';},480);return;}
       if(move==='special'&&att.energy<80)return;
+      playSound(move);
       var base=att.char.moves[move]||10;
-      var dmg=Math.round(base*(0.8+att.char.power/25)*(def.state==='block'?0.18:1));
+      var blocked=def.state==='block';
+      var dmg=Math.round(base*(0.8+att.char.power/25)*(blocked?0.18:1));
       if(move==='special')att.energy=0;
-      att.state='attack';
+      att.state='attack'; att.atkType=move; att.atkFrame=0;
       def.hp=Math.max(0,def.hp-dmg);
       att.energy=Math.min(100,att.energy+(move==='punch'?8:move==='kick'?12:5));
-      var ax=att===gs.p1?W*0.52:W*0.48;
-      spawn(ax,H*0.55,att.char.color,move==='special'?28:14);
-      floatDmg(ax,H*0.45,dmg,move==='special'?'#fbbf24':att.char.color);
+      // Knockback
+      var kb=blocked?3:(move==='special'?25:move==='kick'?15:10);
+      var kbDir=att===gs.p1?1:-1;
+      def.x=Math.max(40,Math.min(W-40,def.x+kb*kbDir));
+      // Hit effects
+      if(!blocked){def.hitFlash=8;shake=move==='special'?12:move==='kick'?6:4;playSound('hit');}
+      // Combo
+      if(lastHitter===att&&!blocked){att.combo++;combo=att.combo;}else{att.combo=1;combo=1;}
+      lastHitter=att;
+      var hitX=(att.x+def.x)/2;
+      spawn(hitX,H*0.7+def.y-40,blocked?'#3b82f6':att.char.color,move==='special'?35:blocked?6:18);
+      if(combo>=3)floatDmg(hitX,H*0.7+def.y-80,combo+'x COMBO!','#fbbf24');
+      floatDmg(hitX,H*0.7+def.y-50,dmg,move==='special'?'#fbbf24':att.char.color);
       setTimeout(function(){if(att.state==='attack')att.state='idle';},move==='special'?700:move==='kick'?420:280);
     }
 
@@ -206,7 +239,10 @@ export default function ArenaPage() {
       if(gs.p2.energy>=80&&r<0.3)attack(gs.p2,gs.p1,'special');
       else if(r<0.45)attack(gs.p2,gs.p1,'punch');
       else if(r<0.75)attack(gs.p2,gs.p1,'kick');
-      else{gs.p2.state='block';setTimeout(function(){if(gs.p2.state==='block')gs.p2.state='idle';},420);}
+      else{gs.p2.state='block';playSound('block');setTimeout(function(){if(gs.p2.state==='block')gs.p2.state='idle';},420);}
+      // CPU movement: dodge or approach
+      if(Math.random()<0.3){var cpuDir=gs.p2.x>gs.p1.x?1:-1;doMove(gs.p2,cpuDir);}
+      if(Math.random()<0.15)doJump(gs.p2);
     }
 
     function onKey(e){
@@ -215,13 +251,22 @@ export default function ArenaPage() {
       if(k==='d'||k==='D')attack(gs.p1,gs.p2,'kick');
       if(k==='s'||k==='S')attack(gs.p1,gs.p2,'block');
       if(k==='w'||k==='W')attack(gs.p1,gs.p2,'special');
+      if(k==='q'||k==='Q')doMove(gs.p1,-1);
+      if(k==='e'||k==='E')doMove(gs.p1,1);
+      if(k===' ')doJump(gs.p1);
       if(k==='ArrowLeft') attack(gs.p2,gs.p1,'punch');
       if(k==='ArrowRight')attack(gs.p2,gs.p1,'kick');
       if(k==='ArrowDown') attack(gs.p2,gs.p1,'block');
       if(k==='ArrowUp')   attack(gs.p2,gs.p1,'special');
     }
     window.addEventListener('keydown',onKey);
-    window._dominexAttack=function(player,move){attack(player===1?gs.p1:gs.p2,player===1?gs.p2:gs.p1,move);};
+    window._dominexAttack=function(player,move){
+      var p=player===1?gs.p1:gs.p2,d=player===1?gs.p2:gs.p1;
+      if(move==='left')doMove(p,-1);
+      else if(move==='right')doMove(p,1);
+      else if(move==='jump')doJump(p);
+      else attack(p,d,move);
+    };
 
     function drawArena(){
       var sky=ctx.createLinearGradient(0,0,0,H);
@@ -280,11 +325,25 @@ export default function ArenaPage() {
     function loop(){
       if(stopped)return;
       frame++;
+      // Physics: gravity + walk toward
+      [gs.p1,gs.p2].forEach(function(p){p.vy+=0.8;p.y=Math.min(0,p.y+p.vy);if(p.y>=0){p.y=0;p.vy=0;}if(p.atkFrame<30)p.atkFrame++;if(p.hitFlash>0)p.hitFlash--;});
+      // Auto walk toward each other slowly
+      if(!gs.over&&gs.p1.state==='idle'&&Math.abs(gs.p1.x-gs.p2.x)>120){gs.p1.x+=gs.p1.x<gs.p2.x?1.2:-1.2;}
+      if(!gs.over&&gs.p2.state==='idle'&&Math.abs(gs.p1.x-gs.p2.x)>120){gs.p2.x+=gs.p2.x<gs.p1.x?1.2:-1.2;}
+      // Screen shake decay
+      if(shake>0)shake*=0.85;
       try {
-        ctx.clearRect(0,0,W,H);
+        ctx.save();
+        if(shake>0.5){ctx.translate(Math.random()*shake-shake/2,Math.random()*shake-shake/2);}
+        ctx.clearRect(-10,-10,W+20,H+20);
         drawArena();
-        drawChar(ctx,gs.p1.char,W*0.27,H*0.7,1,frame,gs.p1.state);
-        drawChar(ctx,gs.p2.char,W*0.73,H*0.7,-1,frame,gs.p2.state);
+        // Hit flash on characters
+        if(gs.p1.hitFlash>0){ctx.save();ctx.globalAlpha=0.5;ctx.fillStyle='#ffffff';ctx.fillRect(gs.p1.x-30,H*0.7+gs.p1.y-120,60,130);ctx.restore();}
+        if(gs.p2.hitFlash>0){ctx.save();ctx.globalAlpha=0.5;ctx.fillStyle='#ffffff';ctx.fillRect(gs.p2.x-30,H*0.7+gs.p2.y-120,60,130);ctx.restore();}
+        drawChar(ctx,gs.p1.char,gs.p1.x,H*0.7+gs.p1.y,1,frame,gs.p1.state,gs.p1.atkType,gs.p1.atkFrame);
+        drawChar(ctx,gs.p2.char,gs.p2.x,H*0.7+gs.p2.y,-1,frame,gs.p2.state,gs.p2.atkType,gs.p2.atkFrame);
+        // Combo display
+        if(combo>=2&&lastHitter){ctx.save();ctx.font='bold 36px Rajdhani,sans-serif';ctx.fillStyle='#fbbf24';ctx.textAlign='center';ctx.shadowColor='#f59e0b';ctx.shadowBlur=20;ctx.fillText(combo+'x COMBO',W/2,H*0.35);ctx.restore();}
         gs.particles=gs.particles.filter(function(p){updateParticle(p);drawParticle(ctx,p);return p.life>0;});
         gs.floats.forEach(function(f){
           f.y+=f.vy;f.life-=0.022;
@@ -295,20 +354,22 @@ export default function ArenaPage() {
         });
         gs.floats=gs.floats.filter(function(f){return f.life>0;});
         drawHUD();runCPU();
+        ctx.restore();
       } catch(err) {
-        // Silently skip frame on error instead of crashing
+        ctx.restore();
       }
       if(Date.now()-gs.lastSec>=1000){gs.time--;gs.lastSec=Date.now();}
       if(!gs.over&&(gs.p1.hp<=0||gs.p2.hp<=0||gs.time<=0)){
         gs.over=true;
+        playSound('ko');
         clearInterval(loopRef.current);
         window.removeEventListener('keydown',onKey);
         var w=gs.p1.hp>gs.p2.hp?'P1':gs.p2.hp>gs.p1.hp?'P2':'DRAW';
         if(w==='P1')setP1Wins(function(v){return v+1;});
         if(w==='P2')setP2Wins(function(v){return v+1;});
         ctx.clearRect(0,0,W,H);drawArena();
-        drawChar(ctx,gs.p1.char,W*0.27,H*0.7,1,frame,gs.p1.hp<=0?'hurt':'idle');
-        drawChar(ctx,gs.p2.char,W*0.73,H*0.7,-1,frame,gs.p2.hp<=0?'hurt':'idle');
+        drawChar(ctx,gs.p1.char,gs.p1.x,H*0.7+gs.p1.y,1,frame,gs.p1.hp<=0?'hurt':'idle','',0);
+        drawChar(ctx,gs.p2.char,gs.p2.x,H*0.7+gs.p2.y,-1,frame,gs.p2.hp<=0?'hurt':'idle','',0);
         drawHUD();
         var fl=0;
         var fi=setInterval(function(){ctx.fillStyle='rgba(255,255,255,'+(Math.max(0,0.6-fl*0.12))+')';ctx.fillRect(0,0,W,H);fl++;if(fl>5)clearInterval(fi);},80);
@@ -397,24 +458,39 @@ export default function ArenaPage() {
   }
 
   // ---- FIGHT SCREEN ----
+  var btnS={padding:'8px 6px',borderRadius:8,background:'rgba(0,0,0,0.7)',fontWeight:800,fontSize:10,cursor:'pointer',minWidth:42,textAlign:'center',touchAction:'manipulation'};
   return (
     <div style={{height:'100vh',background:'#030308',display:'flex',flexDirection:'column',userSelect:'none',overflow:'hidden'}}>
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 16px',background:'rgba(0,0,0,0.85)',borderBottom:'1px solid rgba(255,255,255,0.07)',flexShrink:0,height:40}}>
-        <span style={{fontFamily:'Rajdhani,sans-serif',fontWeight:700,fontSize:18,color:'#f59e0b',letterSpacing:2}}>DOMINEX ARENA</span>
-        <span style={{fontSize:12,color:'#475569'}}>P1=[A/D/S/W] | P2=[Arrows]</span>
-        <button onClick={function(){clearInterval(loopRef.current);setScreen('select');setP1Char(null);setP2Char(null);setStep(1);setWinner(null);}} style={{padding:'6px 16px',borderRadius:8,background:'rgba(239,68,68,0.15)',border:'1px solid rgba(239,68,68,0.3)',color:'#ef4444',fontWeight:700,cursor:'pointer',fontSize:13}}>Quit</button>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'6px 12px',background:'rgba(0,0,0,0.85)',borderBottom:'1px solid rgba(255,255,255,0.07)',flexShrink:0,height:36}}>
+        <span style={{fontFamily:'Rajdhani,sans-serif',fontWeight:700,fontSize:16,color:'#f59e0b',letterSpacing:2}}>DOMINEX ARENA</span>
+        <span style={{fontSize:10,color:'#475569'}}>Q/E=Move Space=Jump WASD=Attack</span>
+        <button onClick={function(){clearInterval(loopRef.current);setScreen('select');setP1Char(null);setP2Char(null);setStep(1);setWinner(null);}} style={{padding:'4px 12px',borderRadius:8,background:'rgba(239,68,68,0.15)',border:'1px solid rgba(239,68,68,0.3)',color:'#ef4444',fontWeight:700,cursor:'pointer',fontSize:12}}>Quit</button>
       </div>
       <div ref={containerRef} style={{flexGrow:1,flexShrink:1,minHeight:0,overflow:'hidden',background:'#14003a'}} />
-      <div style={{display:'flex',justifyContent:'space-between',padding:'10px 12px',background:'rgba(0,0,0,0.9)',borderTop:'1px solid rgba(255,255,255,0.07)',gap:8,flexShrink:0,height:100}}>
-        <div style={{display:'flex',gap:8}}>
-          {[['punch','Punch','#22c55e'],['kick','Kick','#f59e0b'],['block','Block','#3b82f6'],['special','Special','#ef4444']].map(function(arr){
-            return <button key={arr[0]} onPointerDown={function(){if(window._dominexAttack)window._dominexAttack(1,arr[0]);}} style={{padding:'10px 12px',borderRadius:10,background:'rgba(0,0,0,0.7)',border:'2px solid '+arr[2],color:arr[2],fontWeight:800,fontSize:11,cursor:'pointer',minWidth:54,textAlign:'center'}}>{'P1 '+arr[1]}</button>;
-          })}
+      <div style={{display:'flex',justifyContent:'space-between',padding:'6px 6px',background:'rgba(0,0,0,0.95)',borderTop:'1px solid rgba(255,255,255,0.07)',gap:4,flexShrink:0}}>
+        <div style={{display:'flex',flexDirection:'column',gap:4}}>
+          <div style={{display:'flex',gap:3}}>
+            <button onPointerDown={function(){if(window._dominexAttack)window._dominexAttack(1,'left');}} style={Object.assign({},btnS,{border:'2px solid #a855f7',color:'#a855f7'})}>{'<'}</button>
+            <button onPointerDown={function(){if(window._dominexAttack)window._dominexAttack(1,'jump');}} style={Object.assign({},btnS,{border:'2px solid #a855f7',color:'#a855f7'})}>Jump</button>
+            <button onPointerDown={function(){if(window._dominexAttack)window._dominexAttack(1,'right');}} style={Object.assign({},btnS,{border:'2px solid #a855f7',color:'#a855f7'})}>{'>'}</button>
+          </div>
+          <div style={{display:'flex',gap:3}}>
+            {[['punch','Punch','#22c55e'],['kick','Kick','#f59e0b'],['block','Block','#3b82f6'],['special','Spcl','#ef4444']].map(function(arr){
+              return <button key={arr[0]} onPointerDown={function(){if(window._dominexAttack)window._dominexAttack(1,arr[0]);}} style={Object.assign({},btnS,{border:'2px solid '+arr[2],color:arr[2]})}>{arr[1]}</button>;
+            })}
+          </div>
         </div>
-        <div style={{display:'flex',gap:8}}>
-          {[['punch','Punch','#22c55e'],['kick','Kick','#f59e0b'],['block','Block','#3b82f6'],['special','Special','#ef4444']].map(function(arr){
-            return <button key={arr[0]} onPointerDown={function(){if(window._dominexAttack)window._dominexAttack(2,arr[0]);}} style={{padding:'10px 12px',borderRadius:10,background:'rgba(0,0,0,0.7)',border:'2px solid '+arr[2],color:arr[2],fontWeight:800,fontSize:11,cursor:'pointer',minWidth:54,textAlign:'center'}}>{'P2 '+arr[1]}</button>;
-          })}
+        <div style={{display:'flex',flexDirection:'column',gap:4}}>
+          <div style={{display:'flex',gap:3}}>
+            <button onPointerDown={function(){if(window._dominexAttack)window._dominexAttack(2,'left');}} style={Object.assign({},btnS,{border:'2px solid #a855f7',color:'#a855f7'})}>{'<'}</button>
+            <button onPointerDown={function(){if(window._dominexAttack)window._dominexAttack(2,'jump');}} style={Object.assign({},btnS,{border:'2px solid #a855f7',color:'#a855f7'})}>Jump</button>
+            <button onPointerDown={function(){if(window._dominexAttack)window._dominexAttack(2,'right');}} style={Object.assign({},btnS,{border:'2px solid #a855f7',color:'#a855f7'})}>{'>'}</button>
+          </div>
+          <div style={{display:'flex',gap:3}}>
+            {[['punch','Punch','#22c55e'],['kick','Kick','#f59e0b'],['block','Block','#3b82f6'],['special','Spcl','#ef4444']].map(function(arr){
+              return <button key={arr[0]} onPointerDown={function(){if(window._dominexAttack)window._dominexAttack(2,arr[0]);}} style={Object.assign({},btnS,{border:'2px solid '+arr[2],color:arr[2]})}>{arr[1]}</button>;
+            })}
+          </div>
         </div>
       </div>
     </div>
