@@ -121,7 +121,8 @@ function updateParticle(p){p.x+=p.vx;p.y+=p.vy;p.vy+=0.4;p.life-=0.032;}
 function drawParticle(ctx,p){ctx.save();ctx.globalAlpha=Math.max(0,p.life);ctx.fillStyle=p.color;ctx.shadowColor=p.color;ctx.shadowBlur=12;ctx.beginPath();ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);ctx.fill();ctx.restore();}
 
 export default function ArenaPage() {
-  var canvasRef = useRef(null);
+  // containerRef points to a plain DIV - canvas is created IMPERATIVELY inside it
+  var containerRef = useRef(null);
   var loopRef = useRef(null);
 
   var screenState = useState('select');
@@ -143,31 +144,34 @@ export default function ArenaPage() {
   var rkState = useState(0);
   var rematchKey = rkState[0], setRematchKey = rkState[1];
 
-  // Canvas dimensions as STATE - set via HTML attributes, not CSS
-  var cwState = useState(800);
-  var cw = cwState[0], setCw = cwState[1];
-  var chState = useState(500);
-  var ch = chState[0], setCh = chState[1];
-
-  // Effect 1: Set canvas dimensions when fight screen activates
+  // =====================================================================
+  // GAME ENGINE - canvas created via document.createElement (not React)
+  // This ensures React NEVER touches the canvas element
+  // =====================================================================
   useEffect(function() {
-    if (screen === 'fight') {
-      setCw(window.innerWidth);
-      setCh(Math.max(200, window.innerHeight - 140));
-    }
-  }, [screen, rematchKey]);
+    if (screen !== 'fight' || !p1Char || !p2Char) return;
 
-  // Effect 2: Game loop - runs AFTER dimensions are set (cw/ch in deps)
-  // ZERO state updates inside this effect
-  useEffect(function() {
-    if (screen !== 'fight' || !p1Char || !p2Char || cw < 100) return;
+    var container = containerRef.current;
+    if (!container) return;
 
-    var canvas = canvasRef.current;
-    if (!canvas) return;
+    // Create canvas OUTSIDE React
+    var canvas = document.createElement('canvas');
+    var W = window.innerWidth;
+    var H = Math.max(200, window.innerHeight - 140);
+    canvas.width = W;
+    canvas.height = H;
+    canvas.style.display = 'block';
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    canvas.style.background = '#14003a';
+
+    // Clear container and append canvas
+    container.innerHTML = '';
+    container.appendChild(canvas);
+
     var ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    var W = cw, H = ch;
     var frame = 0, stopped = false;
     var gs = {
       p1: { char: p1Char, hp: p1Char.hp, energy: 0, state: 'idle' },
@@ -223,7 +227,8 @@ export default function ArenaPage() {
       var sky=ctx.createLinearGradient(0,0,0,H);
       sky.addColorStop(0,'#14003a');sky.addColorStop(0.6,'#2a0828');sky.addColorStop(1,'#3a0a08');
       ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
-      for(var i=0;i<80;i++){
+      var i;
+      for(i=0;i<80;i++){
         ctx.fillStyle='rgba(255,255,255,0.8)';
         ctx.beginPath();ctx.arc((i*137+43)%W,(i*97+17)%(H*0.6),i%5===0?2:1.2,0,Math.PI*2);ctx.fill();
       }
@@ -320,15 +325,16 @@ export default function ArenaPage() {
       }
     }
 
-    loopRef.current=setInterval(loop,16);
+    loopRef.current = setInterval(loop, 16);
 
     return function(){
-      stopped=true;
+      stopped = true;
       clearInterval(loopRef.current);
-      window.removeEventListener('keydown',onKey);
+      window.removeEventListener('keydown', onKey);
       delete window._dominexAttack;
+      if (container) container.innerHTML = '';
     };
-  },[screen,p1Char,p2Char,cw,ch,rematchKey]);
+  }, [screen, p1Char, p2Char, rematchKey]);
 
   // ---- SELECT SCREEN ----
   if(screen==='select'){
@@ -394,7 +400,7 @@ export default function ArenaPage() {
         <span style={{fontSize:12,color:'#475569'}}>P1=[A/D/S/W] | P2=[Arrows]</span>
         <button onClick={function(){clearInterval(loopRef.current);setScreen('select');setP1Char(null);setP2Char(null);setStep(1);setWinner(null);}} style={{padding:'6px 16px',borderRadius:8,background:'rgba(239,68,68,0.15)',border:'1px solid rgba(239,68,68,0.3)',color:'#ef4444',fontWeight:700,cursor:'pointer',fontSize:13}}>Quit</button>
       </div>
-      <canvas ref={canvasRef} width={cw} height={ch} style={{display:'block',flexShrink:0}} />
+      <div ref={containerRef} style={{flexGrow:1,flexShrink:1,minHeight:0,overflow:'hidden',background:'#14003a'}} />
       <div style={{display:'flex',justifyContent:'space-between',padding:'10px 12px',background:'rgba(0,0,0,0.9)',borderTop:'1px solid rgba(255,255,255,0.07)',gap:8,flexShrink:0,height:100}}>
         <div style={{display:'flex',gap:8}}>
           {[['punch','Punch','#22c55e'],['kick','Kick','#f59e0b'],['block','Block','#3b82f6'],['special','Special','#ef4444']].map(function(arr){
