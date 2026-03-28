@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useEffect, useRef, useState } from 'react';
 
 const CHARS = [
@@ -346,7 +346,7 @@ export default function ArenaPage() {
       // Hint
       ctx.font='10px Inter'; ctx.fillStyle='rgba(255,255,255,0.18)';
       ctx.textAlign='left'; ctx.fillText('P1: [A]Punch [D]Kick [S]Block [W]Special', M, H-8);
-      ctx.textAlign='right'; ctx.fillText('P2: [â†]Punch [â†’]Kick [â†“]Block [â†‘]Special', W-M, H-8);
+      ctx.textAlign='right'; ctx.fillText('P2: [<-]Punch [->]Kick [v]Block [^]Special', W-M, H-8);
     }
 
     function loop() {
@@ -399,11 +399,11 @@ export default function ArenaPage() {
     return ()=>{stopped=true; clearInterval(loopRef.current); window.removeEventListener('keydown',onKey); delete window._dominexAttack;};
   }, [screen, p1Char, p2Char, canvW, canvH, rematchKey]);
 
-  // â”€â”€ Character Select â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Character Select
   if (screen==='select') return (
     <div style={{minHeight:'100vh',background:'linear-gradient(135deg,#030308,#0a0005)',color:'white',fontFamily:'Inter,sans-serif',display:'flex',flexDirection:'column',alignItems:'center',padding:'28px 16px'}}>
-      <div style={{fontFamily:'Rajdhani,sans-serif',fontSize:44,fontWeight:700,color:'#f59e0b',letterSpacing:3,marginBottom:4,textShadow:'0 0 30px rgba(245,158,11,0.5)'}}>âš”ï¸ DOMINEX ARENA</div>
-      <div style={{color:'#64748b',marginBottom:28,fontSize:15}}>{step===1?'ðŸŸ¡ PLAYER 1 â€” Choose Your Fighter':'ðŸ”´ PLAYER 2 â€” Choose Your Fighter'}</div>
+      <div style={{fontFamily:'Rajdhani,sans-serif',fontSize:44,fontWeight:700,color:'#f59e0b',letterSpacing:3,marginBottom:4,textShadow:'0 0 30px rgba(245,158,11,0.5)'}}>⚔️ DOMINEX ARENA</div>
+      <div style={{color:'#64748b',marginBottom:28,fontSize:15}}>{step===1?'PLAYER 1 — Choose Your Fighter':'PLAYER 2 — Choose Your Fighter'}</div>
       {p1Char&&step===2&&(<div style={{marginBottom:16,fontSize:14,color:'#94a3b8'}}>P1: <span style={{color:p1Char.color,fontWeight:800}}>{p1Char.emoji} {p1Char.name}</span> &nbsp;vs&nbsp; <span style={{color:'#64748b'}}>???</span></div>)}
       <div style={{display:'flex',gap:14,flexWrap:'wrap',justifyContent:'center',maxWidth:920}}>
         {CHARS.map(ch=>(
