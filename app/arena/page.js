@@ -317,33 +317,49 @@ export default function ArenaPage() {
 
     // Render helpers
     function drawArena() {
+      // Sky gradient — clearly visible dark-purple to deep-red
       const sky = ctx.createLinearGradient(0, 0, 0, H);
-      sky.addColorStop(0, '#05000f'); sky.addColorStop(1, '#150500');
+      sky.addColorStop(0,   '#0c0030');
+      sky.addColorStop(0.5, '#1a0828');
+      sky.addColorStop(1,   '#2a0a08');
       ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
-      // Stars
-      ctx.fillStyle = 'rgba(255,255,255,0.5)';
-      for (let i = 0; i < 60; i++) {
-        ctx.beginPath(); ctx.arc((i * 131) % W, (i * 97) % (H * 0.55), 0.7, 0, Math.PI * 2); ctx.fill();
+      // Stars — 2px radius, 90% opacity, clearly visible
+      for (let i = 0; i < 80; i++) {
+        const sx = (i * 137 + 43)  % W;
+        const sy = (i * 97  + 17)  % (H * 0.62);
+        const sr = i % 5 === 0 ? 2.2 : 1.2;
+        ctx.fillStyle = `rgba(255,255,255,${0.6 + (i % 3) * 0.15})`;
+        ctx.beginPath(); ctx.arc(sx, sy, sr, 0, Math.PI * 2); ctx.fill();
       }
-      // Ground
+      // Ground platform — visible dark orange-brown
       const gnd = ctx.createLinearGradient(0, H * 0.7, 0, H);
-      gnd.addColorStop(0, '#1a0800'); gnd.addColorStop(1, '#050000');
+      gnd.addColorStop(0, '#3a1200'); gnd.addColorStop(1, '#150800');
       ctx.fillStyle = gnd; ctx.fillRect(0, H * 0.7, W, H * 0.3);
-      ctx.strokeStyle = 'rgba(245,158,11,0.35)'; ctx.lineWidth = 2;
+      // Glowing ground line
+      ctx.shadowColor = '#f59e0b'; ctx.shadowBlur = 10;
+      ctx.strokeStyle = 'rgba(245,158,11,0.85)'; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(0, H * 0.7); ctx.lineTo(W, H * 0.7); ctx.stroke();
+      ctx.shadowBlur = 0;
       // Columns
-      [W * 0.12, W * 0.88].forEach(cx => {
-        const cg = ctx.createLinearGradient(cx - 14, 0, cx + 14, 0);
-        cg.addColorStop(0, '#1c1917'); cg.addColorStop(0.5, '#44403c'); cg.addColorStop(1, '#1c1917');
-        ctx.fillStyle = cg; ctx.fillRect(cx - 14, H * 0.32, 28, H * 0.38);
-        ctx.fillStyle = '#57534e'; ctx.fillRect(cx - 18, H * 0.32, 36, 14);
+      [W * 0.1, W * 0.9].forEach(cx => {
+        const cg = ctx.createLinearGradient(cx - 16, 0, cx + 16, 0);
+        cg.addColorStop(0, '#292524'); cg.addColorStop(0.5, '#57534e'); cg.addColorStop(1, '#292524');
+        ctx.fillStyle = cg; ctx.fillRect(cx - 16, H * 0.28, 32, H * 0.42);
+        ctx.fillStyle = '#78716c'; ctx.fillRect(cx - 20, H * 0.28, 40, 12);
       });
-      // Torches
-      [W * 0.12, W * 0.88].forEach(tx => {
-        ctx.fillStyle = '#44403c'; ctx.fillRect(tx - 4, H * 0.36, 8, H * 0.18);
-        const fire = ctx.createRadialGradient(tx, H * 0.33, 3, tx, H * 0.33, 20);
-        fire.addColorStop(0, '#fef08a'); fire.addColorStop(0.5, '#f97316'); fire.addColorStop(1, 'rgba(239,68,68,0)');
-        ctx.fillStyle = fire; ctx.beginPath(); ctx.arc(tx, H * 0.33 + Math.sin(frame * 0.12) * 4, 20, 0, Math.PI * 2); ctx.fill();
+      // Torches — large flame
+      [W * 0.1, W * 0.9].forEach(tx => {
+        ctx.fillStyle = '#57534e'; ctx.fillRect(tx - 5, H * 0.34, 10, H * 0.16);
+        const oscillate = Math.sin(frame * 0.15) * 5;
+        const fire = ctx.createRadialGradient(tx, H * 0.3, 2, tx, H * 0.3, 28);
+        fire.addColorStop(0, '#fff7aa');
+        fire.addColorStop(0.3, '#f97316');
+        fire.addColorStop(0.7, '#ef4444');
+        fire.addColorStop(1, 'rgba(239,68,68,0)');
+        ctx.fillStyle = fire;
+        ctx.beginPath();
+        ctx.arc(tx, H * 0.3 + oscillate, 28, 0, Math.PI * 2);
+        ctx.fill();
       });
     }
 
