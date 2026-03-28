@@ -402,7 +402,7 @@ export default function ArenaPage() {
   // Character Select
   if (screen==='select') return (
     <div style={{minHeight:'100vh',background:'linear-gradient(135deg,#030308,#0a0005)',color:'white',fontFamily:'Inter,sans-serif',display:'flex',flexDirection:'column',alignItems:'center',padding:'28px 16px'}}>
-      <div style={{fontFamily:'Rajdhani,sans-serif',fontSize:44,fontWeight:700,color:'#f59e0b',letterSpacing:3,marginBottom:4,textShadow:'0 0 30px rgba(245,158,11,0.5)'}}>⚔️ DOMINEX ARENA</div>
+      <div style={{fontFamily:'Rajdhani,sans-serif',fontSize:44,fontWeight:700,color:'#f59e0b',letterSpacing:3,marginBottom:4,textShadow:'0 0 30px rgba(245,158,11,0.5)'}}>DOMINEX ARENA</div>
       <div style={{color:'#64748b',marginBottom:28,fontSize:15}}>{step===1?'PLAYER 1 — Choose Your Fighter':'PLAYER 2 — Choose Your Fighter'}</div>
       {p1Char&&step===2&&(<div style={{marginBottom:16,fontSize:14,color:'#94a3b8'}}>P1: <span style={{color:p1Char.color,fontWeight:800}}>{p1Char.emoji} {p1Char.name}</span> &nbsp;vs&nbsp; <span style={{color:'#64748b'}}>???</span></div>)}
       <div style={{display:'flex',gap:14,flexWrap:'wrap',justifyContent:'center',maxWidth:920}}>
@@ -429,7 +429,7 @@ export default function ArenaPage() {
         ))}
       </div>
       <div style={{marginTop:28,background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.08)',borderRadius:16,padding:'16px 28px',textAlign:'center'}}>
-        <div style={{fontWeight:700,color:'#f59e0b',marginBottom:6,fontSize:14}}>ðŸ’° Match Bet</div>
+        <div style={{fontWeight:700,color:'#f59e0b',marginBottom:6,fontSize:14}}>Match Bet</div>
         <div style={{display:'flex',gap:10,justifyContent:'center',marginBottom:8}}>
           {[50,100,250,500].map(a=>(<button key={a} onClick={()=>setBetAmount(a)} style={{padding:'7px 16px',borderRadius:8,border:`1.5px solid ${betAmount===a?'#f59e0b':'rgba(255,255,255,0.1)'}`,background:betAmount===a?'rgba(245,158,11,0.2)':'transparent',color:betAmount===a?'#f59e0b':'#64748b',fontWeight:700,cursor:'pointer',fontSize:13}}>{a} $DMX</button>))}
         </div>
@@ -438,29 +438,29 @@ export default function ArenaPage() {
     </div>
   );
 
-  // â”€â”€ Winner Screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Winner Screen
   if (winner) return (
     <div style={{minHeight:'100vh',background:'#030308',color:'white',fontFamily:'Inter,sans-serif',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:16}}>
-      <div style={{fontSize:80}}>{winner==='DRAW'?'ðŸ¤':'ðŸ†'}</div>
+      <div style={{fontSize:80}}>{winner==='DRAW'?'=)':'!'}</div>
       <div style={{fontFamily:'Rajdhani,sans-serif',fontSize:52,fontWeight:700,color:winner==='P1'?p1Char.color:winner==='P2'?p2Char.color:'#64748b'}}>
         {winner==='DRAW'?'DRAW!':`${winner==='P1'?p1Char.name:p2Char.name} WINS!`}
       </div>
       <div style={{fontSize:16,color:'#64748b'}}>{winner==='P1'?`+${betAmount} $DMX earned!`:winner==='P2'?`-${betAmount} $DMX lost`:'No $DMX exchanged'}</div>
       <div style={{display:'flex',gap:12,marginTop:16}}>
-        <button onClick={()=>{setWinner(null);setRematchKey(k=>k+1);}} style={{padding:'14px 36px',borderRadius:12,background:'linear-gradient(135deg,#f59e0b,#ef4444)',border:'none',color:'#000',fontWeight:900,fontSize:17,cursor:'pointer'}}>âš”ï¸ Rematch</button>
-        <button onClick={()=>{clearInterval(loopRef.current);setScreen('select');setP1Char(null);setP2Char(null);setStep(1);setWinner(null);setP1Wins(0);setP2Wins(0);setRematchKey(0);}} style={{padding:'14px 36px',borderRadius:12,background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',color:'white',fontWeight:700,fontSize:17,cursor:'pointer'}}>ðŸ”„ New Match</button>
+        <button onClick={()=>{setWinner(null);setRematchKey(k=>k+1);}} style={{padding:'14px 36px',borderRadius:12,background:'linear-gradient(135deg,#f59e0b,#ef4444)',border:'none',color:'#000',fontWeight:900,fontSize:17,cursor:'pointer'}}>Rematch</button>
+        <button onClick={()=>{clearInterval(loopRef.current);setScreen('select');setP1Char(null);setP2Char(null);setStep(1);setWinner(null);setP1Wins(0);setP2Wins(0);setRematchKey(0);}} style={{padding:'14px 36px',borderRadius:12,background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',color:'white',fontWeight:700,fontSize:17,cursor:'pointer'}}>New Match</button>
       </div>
     </div>
   );
 
-  // â”€â”€ Fight Screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Fight Screen ──────────────────────────────────────────────────────────────────────────
   return (
     <div style={{height:'100vh',background:'#030308',display:'flex',flexDirection:'column',userSelect:'none',overflow:'hidden'}}>
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 16px',background:'rgba(0,0,0,0.8)',borderBottom:'1px solid rgba(255,255,255,0.06)',flexShrink:0}}>
-        <span style={{fontFamily:'Rajdhani,sans-serif',fontWeight:700,fontSize:18,color:'#f59e0b',letterSpacing:2}}>âš”ï¸ DOMINEX ARENA</span>
-        <span style={{fontSize:12,color:'#475569'}}>P1=[AWDS] Â· P2=[Arrows]</span>
+        <span style={{fontFamily:'Rajdhani,sans-serif',fontWeight:700,fontSize:18,color:'#f59e0b',letterSpacing:2}}>DOMINEX ARENA</span>
+        <span style={{fontSize:12,color:'#475569'}}>P1=[AWDS] | P2=[Arrows]</span>
         <button onClick={()=>{clearInterval(loopRef.current);setScreen('select');setP1Char(null);setP2Char(null);setStep(1);setWinner(null);}}
-          style={{padding:'6px 16px',borderRadius:8,background:'rgba(239,68,68,0.15)',border:'1px solid rgba(239,68,68,0.3)',color:'#ef4444',fontWeight:700,cursor:'pointer',fontSize:13}}>âœ• Quit</button>
+          style={{padding:'6px 16px',borderRadius:8,background:'rgba(239,68,68,0.15)',border:'1px solid rgba(239,68,68,0.3)',color:'#ef4444',fontWeight:700,cursor:'pointer',fontSize:13}}>X Quit</button>
       </div>
 
       <canvas ref={canvasRef} width={canvW||800} height={canvH||500} style={{display:'block',flexShrink:0}} />
