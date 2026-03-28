@@ -118,7 +118,7 @@ function drawChar(ctx, ch, x, groundY, dir, frame, state) {
 
 function makeParticle(x,y,color){return {x:x,y:y,color:color,vx:(Math.random()-0.5)*9,vy:-Math.random()*10-3,life:1,size:Math.random()*7+3};}
 function updateParticle(p){p.x+=p.vx;p.y+=p.vy;p.vy+=0.4;p.life-=0.032;}
-function drawParticle(ctx,p){ctx.save();ctx.globalAlpha=Math.max(0,p.life);ctx.fillStyle=p.color;ctx.shadowColor=p.color;ctx.shadowBlur=12;ctx.beginPath();ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);ctx.fill();ctx.restore();}
+function drawParticle(ctx,p){ctx.save();ctx.globalAlpha=Math.max(0,p.life);ctx.fillStyle=p.color;ctx.shadowColor=p.color;ctx.shadowBlur=12;ctx.beginPath();ctx.arc(p.x,p.y,Math.max(0,p.size*p.life),0,Math.PI*2);ctx.fill();ctx.restore();}
 
 export default function ArenaPage() {
   // containerRef points to a plain DIV - canvas is created IMPERATIVELY inside it
@@ -295,17 +295,8 @@ export default function ArenaPage() {
         });
         gs.floats=gs.floats.filter(function(f){return f.life>0;});
         drawHUD();runCPU();
-        // DEBUG: green frame counter on canvas
-        ctx.fillStyle='#00ff00';ctx.font='bold 20px monospace';ctx.textAlign='left';
-        ctx.fillText('F:'+frame,10,H-10);
       } catch(err) {
-        // Show error visibly in DOM
-        stopped = true;
-        clearInterval(loopRef.current);
-        var errDiv = document.createElement('div');
-        errDiv.style.cssText = 'position:fixed;top:60px;left:10px;right:10px;background:red;color:white;padding:16px;font-size:14px;font-family:monospace;z-index:9999;border-radius:8px;word-break:break-all;';
-        errDiv.textContent = 'LOOP ERROR at frame ' + frame + ': ' + err.message + ' | Stack: ' + (err.stack||'').substring(0,300);
-        document.body.appendChild(errDiv);
+        // Silently skip frame on error instead of crashing
       }
       if(Date.now()-gs.lastSec>=1000){gs.time--;gs.lastSec=Date.now();}
       if(!gs.over&&(gs.p1.hp<=0||gs.p2.hp<=0||gs.time<=0)){
