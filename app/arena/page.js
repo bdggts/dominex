@@ -314,6 +314,26 @@ export default function ArenaPage() {
     var ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // roundRect polyfill for older browsers
+    if(!ctx.roundRect){
+      CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){
+        if(typeof r==='number')r=[r,r,r,r];
+        if(!r)r=[0,0,0,0];
+        var tl=r[0]||0;
+        this.moveTo(x+tl,y);
+        this.lineTo(x+w-tl,y);
+        this.arcTo(x+w,y,x+w,y+tl,tl);
+        this.lineTo(x+w,y+h-tl);
+        this.arcTo(x+w,y+h,x+w-tl,y+h,tl);
+        this.lineTo(x+tl,y+h);
+        this.arcTo(x,y+h,x,y+h-tl,tl);
+        this.lineTo(x,y+tl);
+        this.arcTo(x,y,x+tl,y,tl);
+        this.closePath();
+        return this;
+      };
+    }
+
     var frame = 0, stopped = false, shake = 0, combo = 0, lastHitter = null;
     var roundNum = 1, p1Rounds = 0, p2Rounds = 0, roundOver = false, roundAnnounce = 0;
     var cpuBaseSpeed = Math.max(20, 55 - stage * 4);
