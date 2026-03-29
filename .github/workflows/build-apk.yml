@@ -9,6 +9,8 @@ on:
 jobs:
   build-apk:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -43,11 +45,21 @@ jobs:
           "$ANDROID_HOME/build-tools/34.0.0/apksigner" sign \
             --ks key.jks --ks-key-alias dominex \
             --ks-pass pass:dominex123 --key-pass pass:dominex123 \
-            --out dominex-arena.apk "$APK"
-          ls -lh dominex-arena.apk
+            --out public/dominex-arena.apk "$APK"
+          ls -lh public/dominex-arena.apk
+
+      - name: Commit APK to repo
+        run: |
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          git add public/dominex-arena.apk
+          git diff --staged --quiet || git commit -m "ci: update Dominex Arena APK [skip ci]"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/upload-artifact@v4
         with:
           name: dominex-arena-apk
-          path: dominex-arena.apk
+          path: public/dominex-arena.apk
           if-no-files-found: error
