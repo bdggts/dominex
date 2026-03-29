@@ -1,10 +1,10 @@
-name: Build Android APK
+﻿name: Build Android APK
 
 on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['.github/workflows/build-apk.yml']
+    paths: ['.github/workflows/build-apk.yml', 'android/**']
 
 jobs:
   build-apk:
@@ -14,105 +14,29 @@ jobs:
 
       - uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '17'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install SDK tools
+      - name: Install SDK components
         run: yes | sdkmanager 'build-tools;34.0.0' 'platforms;android-34' 'platform-tools'
 
-      - name: Create TWA Project
+      - name: Setup Gradle
         run: |
-          mkdir -p twa/app/src/main/res/values
-          mkdir -p twa/app/src/main/res/drawable
-
-          cat > twa/settings.gradle << 'SETTINGSEOF'
-rootProject.name = 'DominexArena'
-include ':app'
-SETTINGSEOF
-
-          cat > twa/build.gradle << 'BUILDEOF'
-buildscript {
-  repositories { google(); mavenCentral() }
-  dependencies { classpath 'com.android.tools.build:gradle:8.2.2' }
-}
-allprojects { repositories { google(); mavenCentral() } }
-BUILDEOF
-
-          cat > twa/app/build.gradle << 'APPBUILDEOF'
-plugins { id 'com.android.application' }
-android {
-  compileSdk 34
-  defaultConfig {
-    applicationId 'com.dominex.arena'
-    minSdk 21
-    targetSdk 34
-    versionCode 1
-    versionName '1.0'
-  }
-  buildTypes { release { minifyEnabled false } }
-  namespace 'com.dominex.arena'
-}
-dependencies {
-  implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
-}
-APPBUILDEOF
-
-          cat > twa/app/src/main/AndroidManifest.xml << 'MANIFESTEOF'
-<?xml version='1.0' encoding='utf-8'?>
-<manifest xmlns:android='http://schemas.android.com/apk/res/android'>
-  <uses-permission android:name='android.permission.INTERNET'/>
-  <application android:label='Dominex Arena' android:allowBackup='true'
-    android:icon='@drawable/ic_launcher' android:theme='@style/AppTheme'>
-    <activity android:name='com.google.androidbrowserhelper.trusted.LauncherActivity'
-      android:exported='true'>
-      <meta-data android:name='android.support.customtabs.trusted.DEFAULT_URL'
-        android:value='https://dominex-three.vercel.app/arena'/>
-      <intent-filter>
-        <action android:name='android.intent.action.MAIN'/>
-        <category android:name='android.intent.category.LAUNCHER'/>
-      </intent-filter>
-    </activity>
-  </application>
-</manifest>
-MANIFESTEOF
-
-          cat > twa/app/src/main/res/values/strings.xml << 'STRINGSEOF'
-<resources><string name='app_name'>Dominex Arena</string></resources>
-STRINGSEOF
-
-          cat > twa/app/src/main/res/values/styles.xml << 'STYLESEOF'
-<resources>
-  <style name='AppTheme' parent='android:Theme.Material.NoActionBar'>
-    <item name='android:windowBackground'>#030308</item>
-  </style>
-</resources>
-STYLESEOF
-
-          curl -s 'https://dominex-three.vercel.app/icons/icon-192.png' \
-            -o twa/app/src/main/res/drawable/ic_launcher.png || true
-
-          wget -q 'https://services.gradle.org/distributions/gradle-8.6-bin.zip' \
-            -O /tmp/gradle.zip
-          mkdir -p /opt/gradle
+          wget -q https://services.gradle.org/distributions/gradle-8.6-bin.zip -O /tmp/gradle.zip
           unzip -q /tmp/gradle.zip -d /opt/gradle
-          export PATH=/opt/gradle/gradle-8.6/bin:$PATH
+          echo "/opt/gradle/gradle-8.6/bin" >> 
 
-          cd twa
-          gradle assembleRelease --no-daemon 2>&1
-          find . -name '*.apk' -ls
+      - name: Build APK
+        working-directory: android
+        run: gradle assembleRelease --no-daemon
 
       - name: Sign APK
         run: |
-          APK=$(find twa -name '*.apk' | head -1)
-          echo "Found APK: $APK"
-          if [ -z "$APK" ]; then
-            echo "No APK found - listing build output:"
-            find twa/app/build -type f 2>/dev/null || echo "No build dir"
-            exit 1
-          fi
+          APK=$(find android -name '*.apk' -not -path '*/intermediates/*' | head -1)
+          echo "APK: $APK"
           keytool -genkey -v -keystore key.jks -alias dominex \
             -keyalg RSA -keysize 2048 -validity 10000 \
             -dname 'CN=Dominex,O=Dominex,C=IN' \
@@ -123,7 +47,7 @@ STYLESEOF
             --out dominex-arena.apk "$APK"
           ls -lh dominex-arena.apk
 
-      - name: Upload APK
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: dominex-arena-apk
