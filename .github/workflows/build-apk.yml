@@ -23,32 +23,30 @@ jobs:
       - name: Install SDK components
         run: yes | sdkmanager 'build-tools;34.0.0' 'platforms;android-34' 'platform-tools'
 
-      - name: Setup Gradle
-        run: |
-          wget -q https://services.gradle.org/distributions/gradle-8.6-bin.zip -O /tmp/gradle.zip
-          unzip -q /tmp/gradle.zip -d /opt/gradle
-          echo "/opt/gradle/gradle-8.6/bin" >> 
+      - uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.6'
 
       - name: Build APK
         working-directory: android
         run: gradle assembleRelease --no-daemon
 
-      - name: Sign APK
+      - name: Sign and package APK
         run: |
-          APK=$(find android -name '*.apk' -not -path '*/intermediates/*' | head -1)
-          echo "APK: $APK"
+          set -e
+          APK=$(find android/app/build/outputs/apk -name "*.apk" | head -1)
+          echo "Signing: $APK"
           keytool -genkey -v -keystore key.jks -alias dominex \
             -keyalg RSA -keysize 2048 -validity 10000 \
-            -dname 'CN=Dominex,O=Dominex,C=IN' \
+            -dname "CN=Dominex,O=Dominex,C=IN" \
             -storepass dominex123 -keypass dominex123 2>/dev/null
-          $ANDROID_HOME/build-tools/34.0.0/apksigner sign \
+          "$ANDROID_HOME/build-tools/34.0.0/apksigner" sign \
             --ks key.jks --ks-key-alias dominex \
             --ks-pass pass:dominex123 --key-pass pass:dominex123 \
             --out dominex-arena.apk "$APK"
           ls -lh dominex-arena.apk
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: dominex-arena-apk
           path: dominex-arena.apk
