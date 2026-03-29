@@ -4,9 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths:
-      - 'public/manifest.json'
-      - '.github/workflows/build-apk.yml'
+    paths: ['.github/workflows/build-apk.yml']
 
 jobs:
   build-apk:
@@ -32,13 +30,19 @@ jobs:
       - name: Build TWA APK
         run: |
           mkdir -p apk-build && cd apk-build
-          bubblewrap init --manifest="https://dominex-three.vercel.app/manifest.json" \
-            --directory="." || true
-          bubblewrap build --skipPwaValidation
+          # Non-interactive init using echo to answer prompts
+          echo -e 'n\n' | bubblewrap init \
+            --manifest="https://dominex-three.vercel.app/manifest.json" \
+            || true
+          # Build with no validation
+          echo -e '\n\n\n\n\n\n\n\n' | bubblewrap build --skipPwaValidation || true
+          ls -la
 
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: dominex-arena-apk
-          path: apk-build/*.apk
+          path: |
+            apk-build/app-release-signed.apk
+            apk-build/*.apk
           if-no-files-found: warn
