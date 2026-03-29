@@ -534,9 +534,10 @@ export default function ArenaPage() {
       // Stage particles
       gs.stageParticles.forEach(function(sp){
         sp.x+=sp.vx;sp.y+=sp.vy;sp.life-=0.008;
+        if(sp.life<=0)return;
         ctx.save();ctx.globalAlpha=Math.max(0,Math.min(1,sp.life));ctx.fillStyle=sp.color;
-        if(sp.type==='fog'){ctx.globalAlpha*=0.3;ctx.beginPath();ctx.arc(sp.x,sp.y,sp.size,0,Math.PI*2);ctx.fill();}
-        else{ctx.shadowColor=sp.color;ctx.shadowBlur=6;ctx.beginPath();ctx.arc(sp.x,sp.y,sp.size*sp.life,0,Math.PI*2);ctx.fill();}
+        if(sp.type==='fog'){ctx.globalAlpha*=0.3;ctx.beginPath();ctx.arc(sp.x,sp.y,Math.max(0.1,sp.size),0,Math.PI*2);ctx.fill();}
+        else{ctx.shadowColor=sp.color;ctx.shadowBlur=6;ctx.beginPath();ctx.arc(sp.x,sp.y,Math.max(0.1,sp.size*sp.life),0,Math.PI*2);ctx.fill();}
         ctx.restore();
       });
       gs.stageParticles=gs.stageParticles.filter(function(sp){return sp.life>0&&sp.y<H+20&&sp.y>-20;});
