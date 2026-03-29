@@ -17,3 +17,12 @@ button{font-family:inherit;cursor:pointer;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
 @keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
 @keyframes glow{0%,100%{box-shadow:0 0 20px rgba(245,158,11,.3);}50%{box-shadow:0 0 40px rgba(245,158,11,.6);}}
+
+/* Mobile PWA optimizations */
+html,body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);}
+canvas{touch-action:none;-webkit-touch-callout:none;}
+button:active{transform:scale(0.92);opacity:0.85;transition:transform 0.05s;}
+@media(max-width:600px){
+  button{-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+}

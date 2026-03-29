@@ -279,6 +279,8 @@ export default function ArenaPage() {
         }
       }
     }catch(e){}
+    // Register service worker for PWA
+    if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(function(){});}
   },[]);
 
   // Tower: 14 opponents + GORO boss final (must be before useEffect)
@@ -612,6 +614,7 @@ export default function ArenaPage() {
     }
 
     function loop(){
+      loopRef.current=requestAnimationFrame(loop);
       if(stopped)return;
       frame++;
       // Physics
@@ -690,7 +693,7 @@ export default function ArenaPage() {
         var roundW=gs.p1.hp>gs.p2.hp?'P1':gs.p2.hp>gs.p1.hp?'P2':'DRAW';
         if(roundW==='P1')p1Rounds++;
         if(roundW==='P2')p2Rounds++;
-        clearInterval(loopRef.current);
+        cancelAnimationFrame(loopRef.current);
         window.removeEventListener('keydown',onKey);
         ctx.clearRect(0,0,W,H);drawArena();
         drawChar(ctx,gs.p1.char,gs.p1.x,H*0.7+gs.p1.y,1,frame,gs.p1.hp<=0?'hurt':'idle','',0);
@@ -722,7 +725,7 @@ export default function ArenaPage() {
             if(matchW==='P2')setP2Wins(function(v){return v+1;});
             setTimeout(function(){
               stopped=true;
-              clearInterval(loopRef.current);
+              cancelAnimationFrame(loopRef.current);
               window.removeEventListener('keydown',onKey);
               delete window._dominexAttack;
               cleanupAllAudio();
@@ -740,18 +743,18 @@ export default function ArenaPage() {
               gs.time=99;gs.lastSec=Date.now();gs.over=false;gs.particles=[];gs.floats=[];
               combo=0;lastHitter=null;shake=0;roundAnnounce=90;
               window.addEventListener('keydown',onKey);
-              loopRef.current=setInterval(loop,16);
+              loopRef.current=requestAnimationFrame(loop);
             },2500);
           }
         },500);
       }
     }
 
-    loopRef.current = setInterval(loop, 16);
+    loopRef.current = requestAnimationFrame(loop);
 
     return function(){
       stopped = true;
-      clearInterval(loopRef.current);
+      cancelAnimationFrame(loopRef.current);
       window.removeEventListener('keydown', onKey);
       delete window._dominexAttack;
       cleanupAllAudio();
@@ -802,7 +805,7 @@ export default function ArenaPage() {
         </div>
         <div style={{display:'flex',gap:12,marginTop:12}}>
           {towerComplete ? (
-            <button onClick={function(){clearInterval(loopRef.current);setScreen('select');setP1Char(null);setP2Char(null);setStep(1);setWinner(null);setP1Wins(0);setP2Wins(0);setRematchKey(0);setStage(1);}} style={{padding:'14px 44px',borderRadius:12,background:'linear-gradient(135deg,#f59e0b,#fbbf24)',border:'none',color:'#000',fontWeight:900,fontSize:18,cursor:'pointer',letterSpacing:1}}>🏆 Play Again</button>
+            <button onClick={function(){cancelAnimationFrame(loopRef.current);setScreen('select');setP1Char(null);setP2Char(null);setStep(1);setWinner(null);setP1Wins(0);setP2Wins(0);setRematchKey(0);setStage(1);}} style={{padding:'14px 44px',borderRadius:12,background:'linear-gradient(135deg,#f59e0b,#fbbf24)',border:'none',color:'#000',fontWeight:900,fontSize:18,cursor:'pointer',letterSpacing:1}}>🏆 Play Again</button>
           ) : (
             <div style={{display:'flex',gap:12}}>
               <button onClick={function(){cleanupAllAudio();if(winner==='P1'){window.location.href='/arena?f='+encodeURIComponent(p1Char.id)+'&s='+stage;}else{window.location.href='/arena?f='+encodeURIComponent(p1Char.id)+'&s='+stage;}}} style={{padding:'18px 36px',borderRadius:12,background:'linear-gradient(135deg,#f59e0b,#ef4444)',border:'none',color:'#000',fontWeight:900,fontSize:18,cursor:'pointer',zIndex:9999,position:'relative',touchAction:'manipulation'}}>{winner==='P1'?'Next Stage ▶':'Retry Stage'}</button>
@@ -814,39 +817,34 @@ export default function ArenaPage() {
     );
   }
 
-  // ---- FIGHT SCREEN ----
-  var btnS={padding:'8px 6px',borderRadius:8,background:'rgba(0,0,0,0.7)',fontWeight:800,fontSize:10,cursor:'pointer',minWidth:42,textAlign:'center',touchAction:'manipulation'};
+  // ---- FIGHT SCREEN (Mobile-First) ----
+  function haptic(){try{if(navigator.vibrate)navigator.vibrate(25);}catch(e){}}
+  function doAttack(action){haptic();if(window._dominexAttack)window._dominexAttack(1,action);}
+  var mobBtn={padding:'10px 0',borderRadius:10,background:'rgba(0,0,0,0.85)',fontWeight:900,fontSize:13,cursor:'pointer',minWidth:52,minHeight:48,textAlign:'center',touchAction:'manipulation',WebkitTapHighlightColor:'transparent',border:'none',display:'flex',alignItems:'center',justifyContent:'center',letterSpacing:1};
   return (
-    <div style={{height:'100vh',background:'#030308',display:'flex',flexDirection:'column',userSelect:'none',overflow:'hidden'}}>
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'6px 12px',background:'rgba(0,0,0,0.85)',borderBottom:'1px solid rgba(255,255,255,0.07)',flexShrink:0,height:36}}>
-        <span style={{fontFamily:'Rajdhani,sans-serif',fontWeight:700,fontSize:16,color:'#f59e0b',letterSpacing:2}}>DOMINEX ARENA</span>
-        <span style={{fontSize:10,color:'#475569'}}>Q/E=Move Space=Jump WASD=Attack</span>
-        <button onClick={function(){clearInterval(loopRef.current);setScreen('select');setP1Char(null);setP2Char(null);setStep(1);setWinner(null);}} style={{padding:'4px 12px',borderRadius:8,background:'rgba(239,68,68,0.15)',border:'1px solid rgba(239,68,68,0.3)',color:'#ef4444',fontWeight:700,cursor:'pointer',fontSize:12}}>Quit</button>
+    <div style={{height:'100vh',background:'#030308',display:'flex',flexDirection:'column',userSelect:'none',overflow:'hidden',touchAction:'none'}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'4px 10px',background:'rgba(0,0,0,0.9)',borderBottom:'1px solid rgba(255,255,255,0.05)',flexShrink:0,height:32}}>
+        <span style={{fontFamily:'Rajdhani,sans-serif',fontWeight:700,fontSize:14,color:'#f59e0b',letterSpacing:2}}>DOMINEX</span>
+        <button onClick={function(){try{if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen();}catch(e){}}} style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.1)',color:'#64748b',fontWeight:600,cursor:'pointer',fontSize:10,touchAction:'manipulation'}}>⛶</button>
+        <button onClick={function(){cancelAnimationFrame(loopRef.current);try{if(document.fullscreenElement)document.exitFullscreen();}catch(e){}setScreen('select');setP1Char(null);setP2Char(null);setStep(1);setWinner(null);}} style={{padding:'3px 10px',borderRadius:6,background:'rgba(239,68,68,0.12)',border:'1px solid rgba(239,68,68,0.2)',color:'#ef4444',fontWeight:700,cursor:'pointer',fontSize:11,touchAction:'manipulation'}}>✕</button>
       </div>
       <div ref={containerRef} style={{flexGrow:1,flexShrink:1,minHeight:0,overflow:'hidden',background:'#14003a'}} />
-      <div style={{display:'flex',justifyContent:'space-between',padding:'6px 6px',background:'rgba(0,0,0,0.95)',borderTop:'1px solid rgba(255,255,255,0.07)',gap:4,flexShrink:0}}>
-        <div style={{display:'flex',flexDirection:'column',gap:4}}>
-          <div style={{display:'flex',gap:3}}>
-            <button onPointerDown={function(){if(window._dominexAttack)window._dominexAttack(1,'left');}} style={Object.assign({},btnS,{border:'2px solid #a855f7',color:'#a855f7'})}>{'<'}</button>
-            <button onPointerDown={function(){if(window._dominexAttack)window._dominexAttack(1,'jump');}} style={Object.assign({},btnS,{border:'2px solid #a855f7',color:'#a855f7'})}>Jump</button>
-            <button onPointerDown={function(){if(window._dominexAttack)window._dominexAttack(1,'right');}} style={Object.assign({},btnS,{border:'2px solid #a855f7',color:'#a855f7'})}>{'>'}</button>
-          </div>
-          <div style={{display:'flex',gap:3}}>
-            {[['punch','Punch','#22c55e'],['kick','Kick','#f59e0b'],['block','Block','#3b82f6'],['special','Spcl','#ef4444']].map(function(arr){
-              return <button key={arr[0]} onPointerDown={function(){if(window._dominexAttack)window._dominexAttack(1,arr[0]);}} style={Object.assign({},btnS,{border:'2px solid '+arr[2],color:arr[2]})}>{arr[1]}</button>;
-            })}
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'6px 8px',background:'rgba(0,0,0,0.95)',borderTop:'1px solid rgba(245,158,11,0.15)',gap:6,flexShrink:0}}>
+        <div style={{display:'flex',flexDirection:'column',gap:4,alignItems:'center'}}>
+          <div style={{display:'flex',gap:4}}>
+            <button onPointerDown={function(){doAttack('left');}} style={Object.assign({},mobBtn,{border:'2px solid #a855f7',color:'#a855f7',fontSize:18,minWidth:48})}>◀</button>
+            <button onPointerDown={function(){doAttack('jump');}} style={Object.assign({},mobBtn,{border:'2px solid #a855f7',color:'#a855f7',minWidth:52})}>↑</button>
+            <button onPointerDown={function(){doAttack('right');}} style={Object.assign({},mobBtn,{border:'2px solid #a855f7',color:'#a855f7',fontSize:18,minWidth:48})}>▶</button>
           </div>
         </div>
-        <div style={{display:'flex',flexDirection:'column',gap:4}}>
-          <div style={{display:'flex',gap:3}}>
-            <button onPointerDown={function(){if(window._dominexAttack)window._dominexAttack(2,'left');}} style={Object.assign({},btnS,{border:'2px solid #a855f7',color:'#a855f7'})}>{'<'}</button>
-            <button onPointerDown={function(){if(window._dominexAttack)window._dominexAttack(2,'jump');}} style={Object.assign({},btnS,{border:'2px solid #a855f7',color:'#a855f7'})}>Jump</button>
-            <button onPointerDown={function(){if(window._dominexAttack)window._dominexAttack(2,'right');}} style={Object.assign({},btnS,{border:'2px solid #a855f7',color:'#a855f7'})}>{'>'}</button>
+        <div style={{display:'flex',flexDirection:'column',gap:4,alignItems:'center'}}>
+          <div style={{display:'flex',gap:4}}>
+            <button onPointerDown={function(){doAttack('punch');}} style={Object.assign({},mobBtn,{border:'2px solid #22c55e',color:'#22c55e',boxShadow:'0 0 8px rgba(34,197,94,0.3)'})}>👊</button>
+            <button onPointerDown={function(){doAttack('kick');}} style={Object.assign({},mobBtn,{border:'2px solid #f59e0b',color:'#f59e0b',boxShadow:'0 0 8px rgba(245,158,11,0.3)'})}>🦶</button>
           </div>
-          <div style={{display:'flex',gap:3}}>
-            {[['punch','Punch','#22c55e'],['kick','Kick','#f59e0b'],['block','Block','#3b82f6'],['special','Spcl','#ef4444']].map(function(arr){
-              return <button key={arr[0]} onPointerDown={function(){if(window._dominexAttack)window._dominexAttack(2,arr[0]);}} style={Object.assign({},btnS,{border:'2px solid '+arr[2],color:arr[2]})}>{arr[1]}</button>;
-            })}
+          <div style={{display:'flex',gap:4}}>
+            <button onPointerDown={function(){doAttack('block');}} style={Object.assign({},mobBtn,{border:'2px solid #3b82f6',color:'#3b82f6',boxShadow:'0 0 8px rgba(59,130,246,0.3)'})}>🛡️</button>
+            <button onPointerDown={function(){doAttack('special');}} style={Object.assign({},mobBtn,{border:'2px solid #ef4444',color:'#ef4444',boxShadow:'0 0 8px rgba(239,68,68,0.4)',animation:'pulse 2s infinite'})}>⚡</button>
           </div>
         </div>
       </div>
