@@ -555,7 +555,16 @@ export default function ArenaPage() {
             else{ctx.fillText(matchW==='P1'?'MATCH WIN! Stage '+(stage+1)+' unlocked!':'MATCH LOST! Try again...',W/2,H/2+80);}
             if(matchW==='P1')setP1Wins(function(v){return v+1;});
             if(matchW==='P2')setP2Wins(function(v){return v+1;});
-            setTimeout(function(){setWinner(matchW);if(matchW==='P1')setStage(function(s){return s+1;});},2800);
+            setTimeout(function(){
+              // CRITICAL: clean up canvas and game loop BEFORE showing winner screen
+              stopped=true;
+              clearInterval(loopRef.current);
+              window.removeEventListener('keydown',onKey);
+              stopBGMusic();
+              try{window.speechSynthesis&&window.speechSynthesis.cancel();}catch(e){}
+              if(container)container.innerHTML='';
+              setWinner(matchW);if(matchW==='P1')setStage(function(s){return s+1;});
+            },2800);
           } else {
             // Next round
             ctx.font='18px Inter,sans-serif';ctx.fillStyle='#94a3b8';
