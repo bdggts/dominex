@@ -58,7 +58,13 @@ function startBGMusic(){
   }catch(e){}
 }
 function stopBGMusic(){
-  try{if(_bgOsc){_bgOsc.stop();_bgOsc=null;_bgGain=null;}}catch(e){_bgOsc=null;_bgGain=null;}
+  try{if(_bgOsc){_bgOsc.stop();_bgOsc.disconnect();_bgOsc=null;}if(_bgGain){_bgGain.disconnect();_bgGain=null;}}catch(e){_bgOsc=null;_bgGain=null;}
+}
+// Full audio cleanup for mobile memory
+function cleanupAllAudio(){
+  stopBGMusic();
+  try{if(window.speechSynthesis)window.speechSynthesis.cancel();}catch(e){}
+  try{if(_sndCtx){_sndCtx.close();_sndCtx=null;}}catch(e){_sndCtx=null;}
 }
 
 // Sound effects via Web Audio API
@@ -556,12 +562,11 @@ export default function ArenaPage() {
             if(matchW==='P1')setP1Wins(function(v){return v+1;});
             if(matchW==='P2')setP2Wins(function(v){return v+1;});
             setTimeout(function(){
-              // CRITICAL: clean up canvas and game loop BEFORE showing winner screen
               stopped=true;
               clearInterval(loopRef.current);
               window.removeEventListener('keydown',onKey);
-              stopBGMusic();
-              try{window.speechSynthesis&&window.speechSynthesis.cancel();}catch(e){}
+              delete window._dominexAttack;
+              cleanupAllAudio();
               if(container)container.innerHTML='';
               setWinner(matchW);if(matchW==='P1')setStage(function(s){return s+1;});
             },2800);
@@ -590,8 +595,7 @@ export default function ArenaPage() {
       clearInterval(loopRef.current);
       window.removeEventListener('keydown', onKey);
       delete window._dominexAttack;
-      stopBGMusic();
-      try{window.speechSynthesis&&window.speechSynthesis.cancel();}catch(e){}
+      cleanupAllAudio();
       if (container) container.innerHTML = '';
     };
   }, [screen, p1Char, p2Char, rematchKey, stage]);
@@ -642,8 +646,8 @@ export default function ArenaPage() {
             <button onClick={function(){clearInterval(loopRef.current);setScreen('select');setP1Char(null);setP2Char(null);setStep(1);setWinner(null);setP1Wins(0);setP2Wins(0);setRematchKey(0);setStage(1);}} style={{padding:'14px 44px',borderRadius:12,background:'linear-gradient(135deg,#f59e0b,#fbbf24)',border:'none',color:'#000',fontWeight:900,fontSize:18,cursor:'pointer',letterSpacing:1}}>🏆 Play Again</button>
           ) : (
             <div style={{display:'flex',gap:12}}>
-              <button onClick={function(){stopBGMusic();try{window.speechSynthesis&&window.speechSynthesis.cancel();}catch(e){}setP2Char(null);setWinner(null);setP1Wins(0);setP2Wins(0);setScreen('select');}} style={{padding:'14px 32px',borderRadius:12,background:'linear-gradient(135deg,#f59e0b,#ef4444)',border:'none',color:'#000',fontWeight:900,fontSize:16,cursor:'pointer'}}>{winner==='P1'?'Next Stage ▶':'Retry Stage'}</button>
-              <button onClick={function(){clearInterval(loopRef.current);setScreen('select');setP1Char(null);setP2Char(null);setStep(1);setWinner(null);setP1Wins(0);setP2Wins(0);setRematchKey(0);setStage(1);}} style={{padding:'14px 32px',borderRadius:12,background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',color:'white',fontWeight:700,fontSize:16,cursor:'pointer'}}>New Match</button>
+              <button onTouchEnd={function(e){e.preventDefault();cleanupAllAudio();setP2Char(null);setWinner(null);setP1Wins(0);setP2Wins(0);setScreen('select');}} onClick={function(){cleanupAllAudio();setP2Char(null);setWinner(null);setP1Wins(0);setP2Wins(0);setScreen('select');}} style={{padding:'18px 36px',borderRadius:12,background:'linear-gradient(135deg,#f59e0b,#ef4444)',border:'none',color:'#000',fontWeight:900,fontSize:18,cursor:'pointer',zIndex:9999,position:'relative',touchAction:'manipulation'}}>{winner==='P1'?'Next Stage ▶':'Retry Stage'}</button>
+              <button onTouchEnd={function(e){e.preventDefault();cleanupAllAudio();setScreen('select');setP1Char(null);setP2Char(null);setWinner(null);setP1Wins(0);setP2Wins(0);setRematchKey(0);setStage(1);}} onClick={function(){cleanupAllAudio();setScreen('select');setP1Char(null);setP2Char(null);setWinner(null);setP1Wins(0);setP2Wins(0);setRematchKey(0);setStage(1);}} style={{padding:'18px 36px',borderRadius:12,background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',color:'white',fontWeight:700,fontSize:18,cursor:'pointer',zIndex:9999,position:'relative',touchAction:'manipulation'}}>New Match</button>
             </div>
           )}
         </div>
