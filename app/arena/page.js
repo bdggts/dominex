@@ -48,9 +48,9 @@ function startBGMusic(){
     _bgGain.gain.value=0.06;
     _bgOsc.connect(f);f.connect(_bgGain);_bgGain.connect(ac.destination);
     _bgOsc.start();
-    // Rhythmic volume modulation
+    // Rhythmic volume modulation (reduced for mobile)
     var now=ac.currentTime;
-    for(var i=0;i<200;i++){
+    for(var i=0;i<50;i++){
       _bgGain.gain.setValueAtTime(0.06,now+i*0.5);
       _bgGain.gain.setValueAtTime(0.10,now+i*0.5+0.1);
       _bgGain.gain.setValueAtTime(0.04,now+i*0.5+0.25);
@@ -256,6 +256,11 @@ export default function ArenaPage() {
   var rematchKey = rkState[0], setRematchKey = rkState[1];
   var stageState = useState(1);
   var stage = stageState[0], setStage = stageState[1];
+
+  // Tower: 14 opponents + GORO boss final (must be before useEffect)
+  var TOWER_IDS=['cyrax','reptile','liukang','subzero','kitana','mileena','baraka','smoke','scorpion','kunglao','nightwolf','raiden','sektor','noob','goro'];
+  var TOWER=TOWER_IDS.map(function(id){return CHARS.find(function(c){return c.id===id;});});
+  var towerOpponent = TOWER[Math.min(stage-1, TOWER.length-1)];
 
   // =====================================================================
   // GAME ENGINE - canvas created via document.createElement (not React)
@@ -582,12 +587,8 @@ export default function ArenaPage() {
     };
   }, [screen, p1Char, p2Char, rematchKey, stage]);
 
-  // ---- SELECT SCREEN ----
-  // Tower: 14 opponents + GORO boss final
-  var TOWER_IDS=['cyrax','reptile','liukang','subzero','kitana','mileena','baraka','smoke','scorpion','kunglao','nightwolf','raiden','sektor','noob','goro'];
-  var TOWER=TOWER_IDS.map(function(id){return CHARS.find(function(c){return c.id===id;});});
-  var towerOpponent = TOWER[Math.min(stage-1, TOWER.length-1)];
 
+  // ---- SELECT SCREEN ----
   if(screen==='select'){
     return (
       <div style={{minHeight:'100vh',background:'linear-gradient(135deg,#030308,#0a0005)',color:'white',fontFamily:'Inter,sans-serif',display:'flex',flexDirection:'column',alignItems:'center',padding:'20px 16px'}}>
@@ -632,7 +633,7 @@ export default function ArenaPage() {
             <button onClick={function(){clearInterval(loopRef.current);setScreen('select');setP1Char(null);setP2Char(null);setStep(1);setWinner(null);setP1Wins(0);setP2Wins(0);setRematchKey(0);setStage(1);}} style={{padding:'14px 44px',borderRadius:12,background:'linear-gradient(135deg,#f59e0b,#fbbf24)',border:'none',color:'#000',fontWeight:900,fontSize:18,cursor:'pointer',letterSpacing:1}}>🏆 Play Again</button>
           ) : (
             <div style={{display:'flex',gap:12}}>
-              <button onClick={function(){setWinner(null);setRematchKey(function(k){return k+1;});}} style={{padding:'14px 32px',borderRadius:12,background:'linear-gradient(135deg,#f59e0b,#ef4444)',border:'none',color:'#000',fontWeight:900,fontSize:16,cursor:'pointer'}}>{winner==='P1'?'Next Stage ▶':'Retry Stage'}</button>
+              <button onClick={function(){stopBGMusic();try{window.speechSynthesis&&window.speechSynthesis.cancel();}catch(e){}var nextOpp=winner==='P1'?TOWER[Math.min(stage,TOWER.length-1)]:p2Char;setP2Char(nextOpp);setWinner(null);setP1Wins(0);setP2Wins(0);setRematchKey(function(k){return k+1;});}} style={{padding:'14px 32px',borderRadius:12,background:'linear-gradient(135deg,#f59e0b,#ef4444)',border:'none',color:'#000',fontWeight:900,fontSize:16,cursor:'pointer'}}>{winner==='P1'?'Next Stage ▶':'Retry Stage'}</button>
               <button onClick={function(){clearInterval(loopRef.current);setScreen('select');setP1Char(null);setP2Char(null);setStep(1);setWinner(null);setP1Wins(0);setP2Wins(0);setRematchKey(0);setStage(1);}} style={{padding:'14px 32px',borderRadius:12,background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',color:'white',fontWeight:700,fontSize:16,cursor:'pointer'}}>New Match</button>
             </div>
           )}
