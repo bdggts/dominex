@@ -274,9 +274,17 @@ export default function ArenaPage() {
         if(found){
           setP1Char(found);
           setStage(stg||1);
-          // Clean URL without reload
           window.history.replaceState(null,'','/arena');
         }
+      }
+    }catch(e){}
+    // Auto fullscreen for TWA/PWA installed app
+    try{
+      var isStandalone=window.matchMedia('(display-mode: fullscreen)').matches||
+        window.matchMedia('(display-mode: standalone)').matches||
+        window.navigator.standalone===true;
+      if(isStandalone&&document.documentElement.requestFullscreen){
+        document.documentElement.requestFullscreen().catch(function(){});
       }
     }catch(e){}
     // Register service worker for PWA
@@ -821,31 +829,37 @@ export default function ArenaPage() {
   function haptic(){try{if(navigator.vibrate)navigator.vibrate(25);}catch(e){}}
   function doAttack(action){haptic();if(window._dominexAttack)window._dominexAttack(1,action);}
   var mobBtn={padding:'10px 0',borderRadius:10,background:'rgba(0,0,0,0.85)',fontWeight:900,fontSize:13,cursor:'pointer',minWidth:52,minHeight:48,textAlign:'center',touchAction:'manipulation',WebkitTapHighlightColor:'transparent',border:'none',display:'flex',alignItems:'center',justifyContent:'center',letterSpacing:1};
+  var btnBase={touchAction:'manipulation',WebkitTapHighlightColor:'transparent',border:'none',cursor:'pointer',userSelect:'none',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,borderRadius:14,transition:'transform .1s'};
   return (
-    <div style={{height:'100vh',background:'#030308',display:'flex',flexDirection:'column',userSelect:'none',overflow:'hidden',touchAction:'none'}}>
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'4px 10px',background:'rgba(0,0,0,0.9)',borderBottom:'1px solid rgba(255,255,255,0.05)',flexShrink:0,height:32}}>
-        <span style={{fontFamily:'Rajdhani,sans-serif',fontWeight:700,fontSize:14,color:'#f59e0b',letterSpacing:2}}>DOMINEX</span>
-        <button onClick={function(){try{if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen();}catch(e){}}} style={{padding:'2px 8px',borderRadius:6,background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.1)',color:'#64748b',fontWeight:600,cursor:'pointer',fontSize:10,touchAction:'manipulation'}}>⛶</button>
-        <button onClick={function(){cancelAnimationFrame(loopRef.current);try{if(document.fullscreenElement)document.exitFullscreen();}catch(e){}setScreen('select');setP1Char(null);setP2Char(null);setStep(1);setWinner(null);}} style={{padding:'3px 10px',borderRadius:6,background:'rgba(239,68,68,0.12)',border:'1px solid rgba(239,68,68,0.2)',color:'#ef4444',fontWeight:700,cursor:'pointer',fontSize:11,touchAction:'manipulation'}}>✕</button>
+    <div style={{height:'100dvh',background:'#030308',display:'flex',flexDirection:'column',userSelect:'none',overflow:'hidden',touchAction:'none',position:'fixed',inset:0}}>
+      {/* Minimal header */}
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'4px 12px',background:'#000',flexShrink:0,height:36,borderBottom:'1px solid rgba(245,158,11,0.15)'}}>
+        <span style={{fontFamily:'Rajdhani,sans-serif',fontWeight:900,fontSize:16,color:'#f59e0b',letterSpacing:3}}>DOMINEX</span>
+        <div style={{display:'flex',gap:8}}>
+          <button onClick={function(){try{if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen();}catch(e){}}} style={Object.assign({},btnBase,{padding:'4px 10px',background:'rgba(255,255,255,0.06)',color:'#94a3b8',fontSize:12,border:'1px solid rgba(255,255,255,0.08)',borderRadius:8})}>⛶</button>
+          <button onClick={function(){cancelAnimationFrame(loopRef.current);try{if(document.fullscreenElement)document.exitFullscreen();}catch(e){}setScreen('select');setP1Char(null);setP2Char(null);setStep(1);setWinner(null);}} style={Object.assign({},btnBase,{padding:'4px 12px',background:'rgba(239,68,68,0.15)',color:'#ef4444',fontSize:12,border:'1px solid rgba(239,68,68,0.25)',borderRadius:8})}>✕ Exit</button>
+        </div>
       </div>
-      <div ref={containerRef} style={{flexGrow:1,flexShrink:1,minHeight:0,overflow:'hidden',background:'#14003a'}} />
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'6px 8px',background:'rgba(0,0,0,0.95)',borderTop:'1px solid rgba(245,158,11,0.15)',gap:6,flexShrink:0}}>
-        <div style={{display:'flex',flexDirection:'column',gap:4,alignItems:'center'}}>
-          <div style={{display:'flex',gap:4}}>
-            <button onPointerDown={function(){doAttack('left');}} style={Object.assign({},mobBtn,{border:'2px solid #a855f7',color:'#a855f7',fontSize:18,minWidth:48})}>◀</button>
-            <button onPointerDown={function(){doAttack('jump');}} style={Object.assign({},mobBtn,{border:'2px solid #a855f7',color:'#a855f7',minWidth:52})}>↑</button>
-            <button onPointerDown={function(){doAttack('right');}} style={Object.assign({},mobBtn,{border:'2px solid #a855f7',color:'#a855f7',fontSize:18,minWidth:48})}>▶</button>
+      {/* Canvas */}
+      <div ref={containerRef} style={{flex:1,minHeight:0,overflow:'hidden',background:'#0a0020'}} />
+      {/* Controls */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr auto 1fr',alignItems:'center',padding:'8px 10px',paddingBottom:'max(8px,env(safe-area-inset-bottom))',background:'#000',borderTop:'2px solid rgba(245,158,11,0.2)',gap:8,flexShrink:0}}>
+        {/* D-Pad */}
+        <div style={{display:'flex',flexDirection:'column',gap:6,alignItems:'center'}}>
+          <button onPointerDown={function(){doAttack('jump');}} style={Object.assign({},btnBase,{width:52,height:42,background:'rgba(168,85,247,0.15)',border:'2px solid rgba(168,85,247,0.5)',color:'#c084fc',fontSize:20})}>↑</button>
+          <div style={{display:'flex',gap:6}}>
+            <button onPointerDown={function(){doAttack('left');}} style={Object.assign({},btnBase,{width:52,height:42,background:'rgba(168,85,247,0.15)',border:'2px solid rgba(168,85,247,0.5)',color:'#c084fc',fontSize:20})}>◀</button>
+            <button onPointerDown={function(){doAttack('right');}} style={Object.assign({},btnBase,{width:52,height:42,background:'rgba(168,85,247,0.15)',border:'2px solid rgba(168,85,247,0.5)',color:'#c084fc',fontSize:20})}>▶</button>
           </div>
         </div>
-        <div style={{display:'flex',flexDirection:'column',gap:4,alignItems:'center'}}>
-          <div style={{display:'flex',gap:4}}>
-            <button onPointerDown={function(){doAttack('punch');}} style={Object.assign({},mobBtn,{border:'2px solid #22c55e',color:'#22c55e',boxShadow:'0 0 8px rgba(34,197,94,0.3)'})}>👊</button>
-            <button onPointerDown={function(){doAttack('kick');}} style={Object.assign({},mobBtn,{border:'2px solid #f59e0b',color:'#f59e0b',boxShadow:'0 0 8px rgba(245,158,11,0.3)'})}>🦶</button>
-          </div>
-          <div style={{display:'flex',gap:4}}>
-            <button onPointerDown={function(){doAttack('block');}} style={Object.assign({},mobBtn,{border:'2px solid #3b82f6',color:'#3b82f6',boxShadow:'0 0 8px rgba(59,130,246,0.3)'})}>🛡️</button>
-            <button onPointerDown={function(){doAttack('special');}} style={Object.assign({},mobBtn,{border:'2px solid #ef4444',color:'#ef4444',boxShadow:'0 0 8px rgba(239,68,68,0.4)',animation:'pulse 2s infinite'})}>⚡</button>
-          </div>
+        {/* Center label */}
+        <div style={{textAlign:'center',color:'rgba(245,158,11,0.4)',fontSize:10,fontWeight:700,letterSpacing:2}}>VS</div>
+        {/* Attack buttons */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,justifyItems:'center'}}>
+          <button onPointerDown={function(){doAttack('punch');}} style={Object.assign({},btnBase,{width:'100%',height:42,background:'rgba(34,197,94,0.15)',border:'2px solid rgba(34,197,94,0.5)',color:'#4ade80',fontSize:13})}>👊 HIT</button>
+          <button onPointerDown={function(){doAttack('kick');}} style={Object.assign({},btnBase,{width:'100%',height:42,background:'rgba(245,158,11,0.15)',border:'2px solid rgba(245,158,11,0.5)',color:'#fbbf24',fontSize:13})}>🦶 KICK</button>
+          <button onPointerDown={function(){doAttack('block');}} style={Object.assign({},btnBase,{width:'100%',height:42,background:'rgba(59,130,246,0.15)',border:'2px solid rgba(59,130,246,0.5)',color:'#60a5fa',fontSize:13})}>🛡️ BLK</button>
+          <button onPointerDown={function(){doAttack('special');}} style={Object.assign({},btnBase,{width:'100%',height:42,background:'rgba(239,68,68,0.2)',border:'2px solid rgba(239,68,68,0.6)',color:'#f87171',fontSize:13,boxShadow:'0 0 12px rgba(239,68,68,0.3)'})}>⚡ SPL</button>
         </div>
       </div>
     </div>

@@ -29,31 +29,54 @@ jobs:
         with:
           gradle-version: '8.6'
 
+      - name: Generate fixed keystore
+        run: |
+          keytool -genkey -v -keystore dominex.keystore -alias dominex \
+            -keyalg RSA -keysize 2048 -validity 36500 \
+            -dname "CN=Dominex Arena,OU=Dev,O=Dominex,L=IN,S=IN,C=IN" \
+            -storepass dominex@2026 -keypass dominex@2026 2>/dev/null
+          # Get SHA-256 fingerprint for assetlinks.json
+          FINGERPRINT=$(keytool -list -v -keystore dominex.keystore \
+            -alias dominex -storepass dominex@2026 2>/dev/null | \
+            grep "SHA256:" | sed "s/.*SHA256: //")
+          echo "SHA256 Fingerprint: $FINGERPRINT"
+          echo "FINGERPRINT=$FINGERPRINT" >> $GITHUB_ENV
+          # Create assetlinks.json
+          mkdir -p public/.well-known
+          cat > public/.well-known/assetlinks.json << ASSETEOF
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.dominex.arena",
+    "sha256_cert_fingerprints": ["$FINGERPRINT"]
+  }
+}]
+ASSETEOF
+          echo "assetlinks.json created:"
+          cat public/.well-known/assetlinks.json
+
       - name: Build APK
         working-directory: android
         run: gradle assembleRelease --no-daemon
 
-      - name: Sign and package APK
+      - name: Sign APK
         run: |
           set -e
           APK=$(find android/app/build/outputs/apk -name "*.apk" | head -1)
           echo "Signing: $APK"
-          keytool -genkey -v -keystore key.jks -alias dominex \
-            -keyalg RSA -keysize 2048 -validity 10000 \
-            -dname "CN=Dominex,O=Dominex,C=IN" \
-            -storepass dominex123 -keypass dominex123 2>/dev/null
           "$ANDROID_HOME/build-tools/34.0.0/apksigner" sign \
-            --ks key.jks --ks-key-alias dominex \
-            --ks-pass pass:dominex123 --key-pass pass:dominex123 \
+            --ks dominex.keystore --ks-key-alias dominex \
+            --ks-pass pass:dominex@2026 --key-pass pass:dominex@2026 \
             --out public/dominex-arena.apk "$APK"
           ls -lh public/dominex-arena.apk
 
-      - name: Commit APK to repo
+      - name: Commit APK and assetlinks.json
         run: |
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
-          git add public/dominex-arena.apk
-          git diff --staged --quiet || git commit -m "ci: update Dominex Arena APK [skip ci]"
+          git add public/dominex-arena.apk public/.well-known/assetlinks.json
+          git diff --staged --quiet || git commit -m "ci: update APK + assetlinks.json [skip ci]"
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
