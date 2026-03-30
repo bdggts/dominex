@@ -86,14 +86,15 @@ function drawFighter(ctx,f,t){
   var H=f.H,st=f.state,af=f.af;
   ctx.save();ctx.translate(x,y);if(dir<0)ctx.scale(-1,1);
 
-  var bob=st==='idle'?Math.sin(t*0.003)*3.5:0;
-  var walk=st==='walk'?Math.sin(t*0.012)*7:0;
-  var pX=st==='punch'?Math.sin(af/14*Math.PI)*36:st==='special'?Math.sin(af/24*Math.PI)*50:0;
-  var kY=st==='kick'?-Math.sin(af/18*Math.PI)*42:0;
+  // Animation values
+  var bob=st==='idle'?Math.sin(t*0.08)*3:0;          // 1 bob/sec
+  var walkPhase=st==='walk'?Math.sin(t*0.5)*8:0;     // 4 steps/sec
+  var pX=st==='punch'?Math.sin(af/14*Math.PI)*38:st==='special'?Math.sin(af/24*Math.PI)*52:0;
+  var kY=st==='kick'?-Math.sin(af/18*Math.PI)*44:0;
   var hurt=st==='hurt';
   var block=st==='block';
   var squat=block?0.88:1;
-  var jumpY=f.vy<-1?-8:f.vy>1?4:0;
+  var jumpY=f.vy<-1?-10:f.vy>1?5:0;
 
   // Special FX
   if(st==='special'){ctx.shadowColor=c;ctx.shadowBlur=22;}
@@ -101,20 +102,18 @@ function drawFighter(ctx,f,t){
   // SHADOW
   ctx.fillStyle='rgba(0,0,0,0.28)';ctx.beginPath();ctx.ellipse(0,2,24,6,0,0,Math.PI*2);ctx.fill();
 
-  // LEGS
-  ctx.fillStyle=c+'bb';
-  // left leg
-  var lly=(1+walk*0.008)*H*0.45*squat;
-  ctx.fillRect(-15,-lly+jumpY+bob,12,lly);
-  // right leg (kick extends)
-  var rly=H*0.45*squat;
+  // LEGS with walk animation
+  ctx.fillStyle=c+'cc';
+  var legSwing=walkPhase*0.4;
+  var lly=H*0.44*squat;
+  ctx.fillRect(-14+legSwing,-lly+jumpY+bob,13,lly);  // left leg
+  var rly=H*0.44*squat;
   ctx.save();if(kY){ctx.translate(8+Math.abs(kY)*0.4,kY);}
-  ctx.fillRect(3,-rly+jumpY+bob,12,rly);ctx.restore();
-
+  ctx.fillRect(3-legSwing,-rly+jumpY+bob,13,rly);ctx.restore();
   // FEET
   ctx.fillStyle=ac;
-  ctx.fillRect(-19,jumpY+bob,16,7);
-  ctx.fillRect(2+Math.abs(kY)*0.4,kY+jumpY+bob,16,7);
+  ctx.fillRect(-18+legSwing,jumpY+bob,15,7);
+  ctx.fillRect(3-legSwing+Math.abs(kY)*0.4,kY+jumpY+bob,15,7);
 
   // TORSO
   ctx.fillStyle=c;
@@ -180,13 +179,13 @@ function drawBG(ctx,W,H,stage,t){
   // Floor line
   ctx.strokeStyle='rgba(245,158,11,0.35)';ctx.lineWidth=2;
   ctx.beginPath();ctx.moveTo(0,H*0.72);ctx.lineTo(W,H*0.72);ctx.stroke();
-  // BG particles
-  ctx.fillStyle='rgba(245,200,80,0.22)';
-  for(var i=0;i<6;i++){
-    var px=((i*W/6+t*(i%2?0.5:-0.3))%W+W)%W;
-    var py=H*0.12+Math.sin(t*0.002+i*1.1)*H*0.25;
-    var pr=1+Math.sin(t*0.005+i)*1.2;
-    ctx.beginPath();ctx.arc(px,py,pr,0,Math.PI*2);ctx.fill();
+  // BG particles - slow drift
+  ctx.fillStyle='rgba(245,200,80,0.25)';
+  for(var i=0;i<8;i++){
+    var px=((i*W/8+t*(i%2?0.8:-0.5))%W+W)%W;
+    var py=H*0.1+Math.sin(t*0.025+i*1.1)*H*0.28;
+    var pr=1.2+Math.sin(t*0.05+i)*1.4;
+    ctx.beginPath();ctx.arc(px,py,Math.max(0.1,pr),0,Math.PI*2);ctx.fill();
   }
 }
 
@@ -401,11 +400,11 @@ function fightLoop(){
   // ── FIGHT TICK ──
   if(gs.phase==='fight'){
     // ── PLAYER MOVEMENT (every frame from key state) ──
-    var canMove=p1.cd===0||['idle','walk'].indexOf(p1.state)>=0;
+    var canAct=['idle','walk'].indexOf(p1.state)>=0;
     var moving=false;
-    if(KEYS.left&&!KEYS.right&&canMove){p1.x=Math.max(45,p1.x-p1.ch.spd*1.4*gs.SC);if(p1.state==='idle'||p1.state==='walk'){p1.state='walk';moving=true;}}
-    if(KEYS.right&&!KEYS.left&&canMove){p1.x=Math.min(W-45,p1.x+p1.ch.spd*1.4*gs.SC);if(p1.state==='idle'||p1.state==='walk'){p1.state='walk';moving=true;}}
-    if(KEYS.jump&&p1.onGround){p1.vy=-11*gs.SC;p1.onGround=false;KEYS.jump=false;snd('cd');}
+    if(KEYS.left&&!KEYS.right&&canAct){p1.x=Math.max(45,p1.x-p1.ch.spd*1.4*gs.SC);if(p1.state==='idle'||p1.state==='walk'){p1.state='walk';moving=true;}}
+    if(KEYS.right&&!KEYS.left&&canAct){p1.x=Math.min(W-45,p1.x+p1.ch.spd*1.4*gs.SC);if(p1.state==='idle'||p1.state==='walk'){p1.state='walk';moving=true;}}
+    if(KEYS.jump&&p1.onGround&&canAct){p1.vy=-11*gs.SC;p1.onGround=false;KEYS.jump=false;}
     if(!moving&&p1.state==='walk')p1.state='idle';
 
     cpuThink(gs);
