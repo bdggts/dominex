@@ -57,14 +57,21 @@ jobs:
       - name: Build Release APK
         working-directory: android
         run: |
-          chmod +x ../gradlew 2>/dev/null || true
-          # Use gradle wrapper if available, else system gradle
-          if command -v gradle &> /dev/null; then
-            gradle assembleRelease --no-daemon -x lint
-          else
-            brew install gradle
-            gradle assembleRelease --no-daemon -x lint
-          fi
+          # Download Gradle 7.6 directly (avoid macOS system gradle version issues)
+          wget -q https://services.gradle.org/distributions/gradle-7.6-bin.zip -O /tmp/gradle76.zip
+          unzip -q /tmp/gradle76.zip -d /tmp/
+          GRADLE=/tmp/gradle-7.6/bin/gradle
+          chmod +x "$GRADLE"
+          
+          # Set SDK paths
+          export ANDROID_SDK_ROOT="$ANDROID_HOME"
+          echo "Gradle: $($GRADLE --version | head -1)"
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "local.properties: $(cat local.properties)"
+          
+          # Build with full stacktrace for debugging
+          "$GRADLE" assembleRelease --no-daemon -x lint --stacktrace 2>&1 | tail -80
+
 
       - name: Sign APK
         run: |
