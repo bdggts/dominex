@@ -5,16 +5,13 @@ android {
     applicationId 'com.dominex.arena'
     minSdk 21
     targetSdk 34
-    versionCode 2
-    versionName '2.0'
+    versionCode 3
+    versionName '2.1'
   }
   buildTypes {
-    release {
-      minifyEnabled false
-    }
+    release { minifyEnabled false }
   }
   namespace 'com.dominex.arena'
 }
-dependencies {
-  implementation 'androidx.appcompat:appcompat:1.6.1'
-}
+// No external deps — WebView is built into Android SDK!
+dependencies {}
