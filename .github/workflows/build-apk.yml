@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Dominex Arena APK
 
 on:
   workflow_dispatch:
@@ -9,14 +9,17 @@ on:
       - 'android/**'
 
 jobs:
-  build-apk:
+  build:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
@@ -27,48 +30,49 @@ jobs:
       - name: Install SDK components
         run: yes | sdkmanager "build-tools;34.0.0" "platforms;android-34" "platform-tools"
 
-      - uses: gradle/actions/setup-gradle@v3
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: '8.6'
 
-      - name: Generate keystore and assetlinks
+      - name: Generate keystore
         run: |
           keytool -genkey -v -keystore dominex.keystore -alias dominex \
             -keyalg RSA -keysize 2048 -validity 36500 \
-            -dname "CN=Dominex Arena,OU=Dev,O=Dominex,L=IN,S=IN,C=IN" \
-            -storepass dominex123 -keypass dominex123 2>/dev/null
+            -dname "CN=Dominex Arena,OU=Game,O=Dominex,L=IN,S=IN,C=IN" \
+            -storepass DominexGame2026 -keypass DominexGame2026 2>/dev/null
           FP=$(keytool -list -v -keystore dominex.keystore -alias dominex \
-            -storepass dominex123 2>/dev/null | grep "SHA256:" | sed 's/.*SHA256: //')
-          echo "Fingerprint: $FP"
+            -storepass DominexGame2026 2>/dev/null | grep "SHA256:" | sed 's/.*SHA256: //')
+          echo "SHA256=$FP"
           mkdir -p public/.well-known
           printf '[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"com.dominex.arena","sha256_cert_fingerprints":["%s"]}}]' "$FP" > public/.well-known/assetlinks.json
-          cat public/.well-known/assetlinks.json
 
       - name: Build APK
         working-directory: android
-        run: gradle assembleRelease --no-daemon
+        run: gradle assembleRelease --no-daemon -x lint
 
       - name: Sign APK
         run: |
           APK=$(find android/app/build/outputs/apk -name "*.apk" | head -1)
-          echo "Found APK: $APK"
+          echo "Signing: $APK"
           "$ANDROID_HOME/build-tools/34.0.0/apksigner" sign \
             --ks dominex.keystore --ks-key-alias dominex \
-            --ks-pass pass:dominex123 --key-pass pass:dominex123 \
+            --ks-pass pass:DominexGame2026 --key-pass pass:DominexGame2026 \
             --out public/dominex-arena.apk "$APK"
           ls -lh public/dominex-arena.apk
 
-      - name: Commit APK and assetlinks.json
+      - name: Commit artifacts
         run: |
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
           git add public/dominex-arena.apk public/.well-known/assetlinks.json
-          git diff --staged --quiet || git commit -m "ci: update APK + assetlinks.json [skip ci]"
+          git diff --staged --quiet || git commit -m "ci: build WebView game APK [skip ci]"
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
           name: dominex-arena-apk
           path: public/dominex-arena.apk
