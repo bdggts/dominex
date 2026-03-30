@@ -236,8 +236,8 @@ function FightScreen({player,opponent,stage,onResult}){
     dims();
     var eHpMult=1+(stage-1)*0.09;
     gsRef.current={
-      p1:{char:player,x:GW*0.28,y:FLOOR,vy:0,hp:player.hp,maxHp:player.hp,energy:0,state:'idle',af:0,cd:0,dir:1,H:0},
-      p2:{char:opponent,x:GW*0.72,y:FLOOR,vy:0,hp:Math.round(opponent.hp*eHpMult),maxHp:Math.round(opponent.hp*eHpMult),energy:0,state:'idle',af:0,cd:0,dir:-1,H:0},
+      p1:{char:player,x:GW*0.28,y:FLOOR,vy:0,hp:player.hp,maxHp:player.hp,energy:0,state:'idle',af:0,cd:0,dir:1,H:0,onGround:true},
+      p2:{char:opponent,x:GW*0.72,y:FLOOR,vy:0,hp:Math.round(opponent.hp*eHpMult),maxHp:Math.round(opponent.hp*eHpMult),energy:0,state:'idle',af:0,cd:0,dir:-1,H:0,onGround:true},
       timer:99,lastSec:Date.now(),p1r:0,p2r:0,round:1,
       parts:[],shake:0,phase:'countdown',cd3:3,cdTimer:60,over:false,
     };
@@ -335,7 +335,7 @@ function FightScreen({player,opponent,stage,onResult}){
         // CPU move toward player if state=walk
         if(p2.state==='walk'){if(p2.x>p1.x)p2.x-=MS2;else p2.x+=MS2;}
         // Gravity
-        [p1,p2].forEach(function(p){p.y+=p.vy;p.vy+=G;if(p.y>=FLOOR){p.y=FLOOR;p.vy=0;}});
+        [p1,p2].forEach(function(p){p.y+=p.vy;p.vy+=G;if(p.y>=FLOOR){p.y=FLOOR;p.vy=0;p.onGround=true;}else{p.onGround=false;}});
         // Bounds
         p1.x=Math.max(50,Math.min(GW-50,p1.x));p2.x=Math.max(50,Math.min(GW-50,p2.x));
         // Separate
@@ -397,7 +397,7 @@ function FightScreen({player,opponent,stage,onResult}){
   },[]);
 
   var btnS={flexShrink:0,touchAction:'manipulation',WebkitTapHighlightColor:'transparent',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900,fontFamily:'Rajdhani,sans-serif',letterSpacing:1,border:'none',borderRadius:12};
-  function mv(d){var gs=gsRef.current;if(!gs||gs.phase!=='fight')return;var p1=gs.p1,MS=player.spd*1.3;if(d==='l')p1.x=Math.max(50,p1.x-MS);else if(d==='r')p1.x=Math.min(9999,p1.x+MS);else if(d==='j'&&p1.y>=p1.y-1)p1.vy=-13;}
+  function mv(d){var gs=gsRef.current;if(!gs||gs.phase!=='fight')return;var p1=gs.p1,MS=player.spd*1.5*window.innerHeight/320;if(d==='l')p1.x=Math.max(50,p1.x-MS);else if(d==='r')p1.x=Math.min(window.innerWidth-180,p1.x+MS);else if(d==='j'&&p1.onGround){p1.vy=-13*(window.innerHeight/320);p1.onGround=false;}}
   function atk(a){if(window._ga)window._ga(a);try{if(navigator.vibrate)navigator.vibrate(18);}catch(e){}}
   return (
     <div style={{position:'fixed',inset:0,background:'#030308',display:'flex',flexDirection:'column',overflow:'hidden',touchAction:'none'}}>
