@@ -1,6 +1,8 @@
 package com.dominex.arena;
 
 import android.app.Activity;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.webkit.WebSettings;
@@ -75,10 +77,25 @@ public class MainActivity extends Activity {
             }
         });
 
-        // Load game from assets (local file, no internet needed)
-        webView.loadUrl("file:///android_asset/index.html");
+        // Smart loading: online = latest from Vercel, offline = local bundled game
+        if (isOnline()) {
+            webView.loadUrl("https://dominex-three.vercel.app/arena");
+        } else {
+            webView.loadUrl("file:///android_asset/index.html");
+        }
 
         setContentView(webView);
+    }
+
+    // Check internet connectivity
+    private boolean isOnline() {
+        try {
+            ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+            NetworkInfo ni = cm.getActiveNetworkInfo();
+            return ni != null && ni.isConnectedOrConnecting();
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     @Override

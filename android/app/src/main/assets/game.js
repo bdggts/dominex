@@ -30,16 +30,18 @@ var TOWER=TOWER_ORDER.map(function(id){return CHARS.find(function(c){return c.id
 // STATE
 // ═══════════════════════════════════════════════════════
 var G={
-  screen:'splash',    // splash|select|vs|fight|result
-  player:null,        // selected character
-  stage:1,            // current tower stage (1-15)
-  selIdx:0,           // selected char in grid
-  gs:null,            // game state during fight
+  screen:'splash',
+  player:null,
+  stage:1,
+  selIdx:0,
+  gs:null,
   raf:null,
   cpuTick:0,
   stopped:false,
   bgInt:null,
 };
+// Per-frame key state (set by buttons, read every game frame)
+var KEYS={left:false,right:false,jump:false};
 
 // ═══════════════════════════════════════════════════════
 // AUDIO
@@ -309,17 +311,11 @@ function playerAttack(type){
 }
 window._atk=playerAttack;
 
-// Player move (called from d-pad)
-function playerMove(dir){
-  var gs=G.gs;if(!gs||gs.phase!=='fight'||G.stopped)return;
-  var p1=gs.p1;
-  var spd=p1.ch.spd*1.5*gs.SC;
-  if(dir==='left')p1.x=Math.max(50,p1.x-spd);
-  else if(dir==='right')p1.x=Math.min(gs.W-50,p1.x+spd);
-  else if(dir==='jump'&&p1.onGround){p1.vy=-15*gs.SC;p1.onGround=false;}
-  if(dir==='left'||dir==='right')p1.state='walk';
-}
-window._mv=playerMove;
+// Key state setters (called from buttons)
+function keyDown(action){KEYS[action]=true;}
+function keyUp(action){KEYS[action]=false;}
+window._kd=keyDown;
+window._ku=keyUp;
 
 // CPU AI
 function cpuThink(gs){
@@ -404,10 +400,18 @@ function fightLoop(){
 
   // ── FIGHT TICK ──
   if(gs.phase==='fight'){
+    // ── PLAYER MOVEMENT (every frame from key state) ──
+    var canMove=p1.cd===0||['idle','walk'].indexOf(p1.state)>=0;
+    var moving=false;
+    if(KEYS.left&&!KEYS.right&&canMove){p1.x=Math.max(45,p1.x-p1.ch.spd*1.4*gs.SC);if(p1.state==='idle'||p1.state==='walk'){p1.state='walk';moving=true;}}
+    if(KEYS.right&&!KEYS.left&&canMove){p1.x=Math.min(W-45,p1.x+p1.ch.spd*1.4*gs.SC);if(p1.state==='idle'||p1.state==='walk'){p1.state='walk';moving=true;}}
+    if(KEYS.jump&&p1.onGround){p1.vy=-11*gs.SC;p1.onGround=false;KEYS.jump=false;snd('cd');}
+    if(!moving&&p1.state==='walk')p1.state='idle';
+
     cpuThink(gs);
     // Gravity + floor
     [p1,p2].forEach(function(p){
-      p.y+=p.vy;p.vy+=0.6*gs.SC;
+      p.y+=p.vy;p.vy+=0.75*gs.SC;// stronger gravity = less floaty
       if(p.y>=gs.FLOOR){p.y=gs.FLOOR;p.vy=0;p.onGround=true;}else{p.onGround=false;}
     });
     // Bounds
@@ -421,7 +425,6 @@ function fightLoop(){
       if(p.cd>0)p.cd--;
       if(['punch','kick','special','hurt'].indexOf(p.state)>=0){p.af++;var maxAf={punch:14,kick:20,special:26,hurt:10};if(p.af>=(maxAf[p.state]||14))p.state='idle';}
       if(p.state==='block'&&p.cd<=0)p.state='idle';
-      if(p.state==='walk'&&p.cd<=0)p.state='idle';
     });
     // Energy regen
     if(gs.frame%90===0){p1.energy=Math.min(100,p1.energy+2);p2.energy=Math.min(100,p2.energy+2);}
@@ -583,40 +586,54 @@ function showResult(win,gs){
 // CONTROLS SETUP
 // ═══════════════════════════════════════════════════════
 function setupControls(){
-  // D-pad
+  // D-pad — key state approach (smooth, per-frame)
   ['dp-up','dp-left','dp-right'].forEach(function(id){
-    var el=$(id),action=el.dataset.action;
-    el.addEventListener('pointerdown',function(e){e.preventDefault();$('game-canvas').focus&&$('game-canvas').focus();el.classList.add('pressed');window._mv&&window._mv(action);});
-    el.addEventListener('pointerup',function(){el.classList.remove('pressed');});
-    el.addEventListener('pointercancel',function(){el.classList.remove('pressed');});
-    // Repeat on hold for movement
-    var held=null;
-    el.addEventListener('pointerdown',function(){
-      if(action==='left'||action==='right'){
-        held=setInterval(function(){if(window._mv)window._mv(action);},50);
-      }
+    var el=$(id);
+    if(!el)return;
+    var action=el.dataset.action;
+    var releaseEvents=['pointerup','pointercancel','pointerleave'];
+    el.addEventListener('pointerdown',function(e){
+      e.preventDefault();
+      el.classList.add('pressed');
+      if(action==='jump'){KEYS.jump=true;}
+      else if(action==='left'){KEYS.left=true;KEYS.right=false;}
+      else if(action==='right'){KEYS.right=true;KEYS.left=false;}
     });
-    ['pointerup','pointercancel','pointerleave'].forEach(function(ev){
-      el.addEventListener(ev,function(){if(held){clearInterval(held);held=null;}});
+    releaseEvents.forEach(function(ev){
+      el.addEventListener(ev,function(){
+        el.classList.remove('pressed');
+        if(action==='jump')KEYS.jump=false;
+        else if(action==='left')KEYS.left=false;
+        else if(action==='right')KEYS.right=false;
+      });
     });
   });
 
   // Attack buttons
   ['btn-punch','btn-kick','btn-block','btn-special'].forEach(function(id){
-    var el=$(id),action=el.dataset.action;
-    el.addEventListener('pointerdown',function(e){e.preventDefault();el.classList.add('pressed');window._atk&&window._atk(action);try{if(navigator.vibrate)navigator.vibrate(18);}catch(e){}});
-    el.addEventListener('pointerup',function(){el.classList.remove('pressed');});
-    el.addEventListener('pointercancel',function(){el.classList.remove('pressed');});
-    // Block auto-release
-    if(action==='block'){
-      ['pointerup','pointercancel','pointerleave'].forEach(function(ev){
-        el.addEventListener(ev,function(){if(G.gs&&G.gs.p1.state==='block'){G.gs.p1.state='idle';G.gs.p1.cd=0;}});
+    var el=$(id);
+    if(!el)return;
+    var action=el.dataset.action;
+    el.addEventListener('pointerdown',function(e){
+      e.preventDefault();
+      el.classList.add('pressed');
+      window._atk&&window._atk(action);
+      try{if(navigator.vibrate)navigator.vibrate(18);}catch(err){}
+    });
+    ['pointerup','pointercancel','pointerleave'].forEach(function(ev){
+      el.addEventListener(ev,function(){
+        el.classList.remove('pressed');
+        // Auto-release block
+        if(action==='block'&&G.gs&&G.gs.p1&&G.gs.p1.state==='block'){
+          G.gs.p1.state='idle';G.gs.p1.cd=0;
+        }
       });
-    }
+    });
   });
 
-  // Prevent context menu
+  // Prevent context menu and scroll
   document.addEventListener('contextmenu',function(e){e.preventDefault();});
+  document.addEventListener('touchmove',function(e){e.preventDefault();},{passive:false});
 }
 
 // ═══════════════════════════════════════════════════════
