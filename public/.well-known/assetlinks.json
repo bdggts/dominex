@@ -1,1 +1,1 @@
-[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"com.dominex.arena","sha256_cert_fingerprints":["CC:30:FE:31:C5:93:6D:F3:40:AA:FA:39:80:3D:9A:8B:EC:65:4F:C9:82:37:5F:4B:C6:8A:E5:8D:C4:83:CC:C2"]}}]
+[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"com.dominex.arena","sha256_cert_fingerprints":["EC:5E:B2:BF:5D:AD:8D:1B:7F:CF:AB:1B:EC:9E:59:8E:ED:D1:41:AE:EA:68:04:BF:8E:49:8B:1E:3E:40:D4:CF"]}}]
