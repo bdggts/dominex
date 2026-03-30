@@ -1,4 +1,4 @@
-package com.dominex.arena;
+﻿package com.dominex.arena;
 
 import android.app.Activity;
 import android.net.ConnectivityManager;
@@ -79,7 +79,7 @@ public class MainActivity extends Activity {
 
         // Smart loading: online = latest from Vercel, offline = local bundled game
         if (isOnline()) {
-            webView.loadUrl("https://dominex-three.vercel.app/arena");
+            webView.loadUrl("https://dominex-three.vercel.app/game/index.html");
         } else {
             webView.loadUrl("file:///android_asset/index.html");
         }
@@ -100,7 +100,7 @@ public class MainActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        // Block back button — don't exit game accidentally
+        // Block back button â€” don't exit game accidentally
     }
 
     @Override
