@@ -74,8 +74,9 @@ jobs:
           gradle --version | head -1
 
           # Build (--info for verbose output)
-          # Build (verbose for debugging)
-          gradle assembleRelease --no-daemon -x lint --no-configuration-cache --info 2>&1 | tee /tmp/gradle_build.log; tail -50 /tmp/gradle_build.log
+          # Build debug first to test (no signing needed)
+          gradle assembleDebug --no-daemon -x lint --stacktrace 2>&1
+
 
 
       - name: Find & sign APK
