@@ -74,6 +74,12 @@ jobs:
           # Propagate gradle exit code
           exit ${PIPESTATUS[0]}
 
+      - name: Show build error
+        if: failure()
+        run: |
+          echo "=== LAST 60 LINES OF BUILD LOG ==="
+          tail -60 /tmp/build.log || echo "No build log"
+
       - name: Upload build log on failure
         if: failure()
         uses: actions/upload-artifact@v4
