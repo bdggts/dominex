@@ -284,7 +284,7 @@ function initFight(){
   COMBO.count=0;COMBO.timer=0;COMBO.lastHitter=null;COMBO.textTimer=0;COMBO.flash=0;
 
   var opp=TOWER[Math.min(G.stage-1,TOWER.length-1)];
-  var eHpMult=1+(G.stage-1)*0.09;
+  var eHpMult=1+(G.stage-1)*0.15;
   $('hud-p1-name').textContent=G.player.name;$('hud-p1-name').style.color=G.player.color;
   $('hud-p2-name').textContent=opp.name;$('hud-p2-name').style.color=opp.color;
   G.cpuTick=0;
@@ -343,6 +343,8 @@ function rectsHit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y
 
 function doAttack(attacker,defender,type,gs){
   var baseDmg={punch:attacker.ch.pow*1.3+Math.random()*5,kick:attacker.ch.pow*2.1+Math.random()*9,special:attacker.ch.pow*5+Math.random()*16}[type]||12;
+  // CPU damage boost per stage
+  if(attacker===gs.p2){baseDmg*=1+(G.stage-1)*0.06;}
   var delay={punch:80,kick:130,special:160}[type]||80;
   setTimeout(function(){
     if(G.stopped)return;
@@ -407,10 +409,10 @@ function cpuThink(gs){
 
   if(p2.cd>0||p2.state==='hurt')return;
   G.cpuTick--;if(G.cpuTick>0)return;
-  var react=Math.max(18,80-G.stage*4)+Math.floor(Math.random()*20);
+  var react=Math.max(12,75-G.stage*5)+Math.floor(Math.random()*15);
   G.cpuTick=react;
   var r=Math.random();
-  var aggr=0.28+G.stage*0.047;var blk=0.07+G.stage*0.022;
+  var aggr=0.30+G.stage*0.055;var blk=0.08+G.stage*0.028;
   if(dist<200){
     if(r<blk&&p1.state!=='idle'&&p1.state!=='walk'){p2.state='block';p2.cd=8;snd('block');return;}
     if(r<aggr){
@@ -738,9 +740,13 @@ function showResult(win,gs){
   document.getElementById('result-screen').style.background=champion?'radial-gradient(ellipse at center,#1a1000,#000)':win?'radial-gradient(ellipse at center,#001400,#000)':'radial-gradient(ellipse at center,#140000,#000)';
   G.screen='result';showScreen('result');
   $('res-next').onclick=function(){
-    if(win&&!champion){G.stage=Math.min(15,G.stage+1);save();}
-    else if(champion){G.stage=1;save();}
-    G.screen='select';showScreen('select');initSelect();
+    if(win&&!champion){
+      G.stage=Math.min(15,G.stage+1);save();
+      G.screen='vs';showScreen('vs');initVS();
+    } else if(champion){
+      G.stage=1;save();
+      G.screen='select';showScreen('select');initSelect();
+    }
   };
   $('res-retry').onclick=function(){G.screen='fight';showScreen('fight');initFight();};
   $('res-menu').onclick=function(){G.stage=1;save();G.screen='splash';showScreen('splash');initSplash();};
