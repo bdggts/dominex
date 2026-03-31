@@ -68,17 +68,20 @@ jobs:
           echo "=== Build Info ==="
           gradle --version | head -1
           echo "SDK: $ANDROID_HOME"
-          echo "local.properties: $(cat local.properties)"
           echo "=== Building ==="
+          set +e
           gradle assembleRelease --no-daemon -x lint --stacktrace 2>&1 | tee /tmp/build.log
-          # Propagate gradle exit code
-          exit ${PIPESTATUS[0]}
-
-      - name: Show build error
-        if: failure()
-        run: |
-          echo "=== LAST 60 LINES OF BUILD LOG ==="
-          tail -60 /tmp/build.log || echo "No build log"
+          BUILD_EXIT=$?
+          set -e
+          if [ $BUILD_EXIT -ne 0 ]; then
+            echo ""
+            echo "::error::BUILD FAILED - Last 30 lines:"
+            tail -30 /tmp/build.log
+            echo ""
+            echo "::error::GRADLE ERROR SUMMARY:"
+            grep -i "error\|FAILURE\|exception\|Could not" /tmp/build.log | head -15
+            exit $BUILD_EXIT
+          fi
 
       - name: Upload build log on failure
         if: failure()
@@ -87,6 +90,7 @@ jobs:
           name: gradle-build-log
           path: /tmp/build.log
           if-no-files-found: ignore
+
 
 
       - name: Sign & package APK
