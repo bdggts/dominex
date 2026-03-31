@@ -17,7 +17,8 @@ android {
   buildTypes {
     release {
       minifyEnabled false
-      signingConfig null
+      // Use debug signing so APK is always generated
+      signingConfig signingConfigs.debug
     }
   }
 }
