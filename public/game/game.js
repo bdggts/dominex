@@ -97,12 +97,14 @@ function drawFighter(ctx,f,t){
   var jumpY=f.vy<-1?-10:f.vy>1?5:0;
   // Walk lean: tilt toward movement direction
   var lean=0;
-  if(st==='walk'){lean=0.12;}  // lean forward
+  if(st==='walk'){lean=dir>0?0.1:-0.1;}  // lean toward movement direction
+
 
   // Special FX
   if(st==='special'){ctx.shadowColor=c;ctx.shadowBlur=22;}
-  // Walk lean
-  if(lean){ctx.rotate(lean);}
+  // Walk lean (use abs value - scale(-1,1) handles direction)
+  if(lean){ctx.rotate(Math.abs(lean)*dir);}
+
 
   // SHADOW
   ctx.fillStyle='rgba(0,0,0,0.28)';ctx.beginPath();ctx.ellipse(0,2,24,6,0,0,Math.PI*2);ctx.fill();
@@ -249,6 +251,24 @@ function hudUpdate(gs){
 function initFight(){
   G.stopped=false;
   G.gs=null;
+
+  // DEFINE ATTACK HANDLER for mobile buttons (was missing - all buttons were dead)
+  window._atk=function(action){
+    var gs=G.gs;
+    if(!gs||gs.phase!=='fight')return;
+    var p1=gs.p1;
+    var canAct=['idle','walk'].indexOf(p1.state)>=0;
+    if(action==='punch'&&canAct&&p1.cd<=0){
+      p1.state='punch';p1.af=0;p1.cd=22;snd('punch');doAttack(p1,gs.p2,'punch',gs);
+    }else if(action==='kick'&&canAct&&p1.cd<=0){
+      p1.state='kick';p1.af=0;p1.cd=30;snd('kick');doAttack(p1,gs.p2,'kick',gs);
+    }else if(action==='block'&&['idle','walk','block'].indexOf(p1.state)>=0){
+      p1.state='block';p1.cd=18;snd('block');
+    }else if(action==='special'&&canAct&&p1.cd<=0&&p1.energy>=100){
+      p1.state='special';p1.af=0;p1.cd=45;p1.energy=0;snd('special');doAttack(p1,gs.p2,'special',gs);
+    }
+  };
+
   var opp=TOWER[Math.min(G.stage-1,TOWER.length-1)];
   var eHpMult=1+(G.stage-1)*0.09;
   $('hud-p1-name').textContent=G.player.name;$('hud-p1-name').style.color=G.player.color;
