@@ -96,14 +96,10 @@ function drawFighter(ctx,f,t){
   var squat=block?0.88:1;
   var jumpY=f.vy<-1?-10:f.vy>1?5:0;
   // Walk lean: tilt toward movement direction
-  var lean=0;
-  if(st==='walk'){lean=dir>0?0.1:-0.1;}  // lean toward movement direction
-
-
   // Special FX
   if(st==='special'){ctx.shadowColor=c;ctx.shadowBlur=22;}
-  // Walk lean (use abs value - scale(-1,1) handles direction)
-  if(lean){ctx.rotate(Math.abs(lean)*dir);}
+  // Walk lean: always lean forward (scale(-1,1) handles flip)
+  if(st==='walk'){ctx.rotate(0.08);}
 
 
   // SHADOW
@@ -252,23 +248,6 @@ function initFight(){
   G.stopped=false;
   G.gs=null;
 
-  // DEFINE ATTACK HANDLER for mobile buttons (was missing - all buttons were dead)
-  window._atk=function(action){
-    var gs=G.gs;
-    if(!gs||gs.phase!=='fight')return;
-    var p1=gs.p1;
-    var canAct=['idle','walk'].indexOf(p1.state)>=0;
-    if(action==='punch'&&canAct&&p1.cd<=0){
-      p1.state='punch';p1.af=0;p1.cd=22;snd('punch');doAttack(p1,gs.p2,'punch',gs);
-    }else if(action==='kick'&&canAct&&p1.cd<=0){
-      p1.state='kick';p1.af=0;p1.cd=30;snd('kick');doAttack(p1,gs.p2,'kick',gs);
-    }else if(action==='block'&&['idle','walk','block'].indexOf(p1.state)>=0){
-      p1.state='block';p1.cd=18;snd('block');
-    }else if(action==='special'&&canAct&&p1.cd<=0&&p1.energy>=100){
-      p1.state='special';p1.af=0;p1.cd=45;p1.energy=0;snd('special');doAttack(p1,gs.p2,'special',gs);
-    }
-  };
-
   var opp=TOWER[Math.min(G.stage-1,TOWER.length-1)];
   var eHpMult=1+(G.stage-1)*0.09;
   $('hud-p1-name').textContent=G.player.name;$('hud-p1-name').style.color=G.player.color;
@@ -366,14 +345,28 @@ function keyUp(action){KEYS[action]=false;}
 window._kd=keyDown;
 window._ku=keyUp;
 
-// CPU AI
+// CPU AI — attacks are tick-gated, movement is per-frame (smooth)
 function cpuThink(gs){
   var p1=gs.p1,p2=gs.p2;
+  var canAct2=['idle','walk'].indexOf(p2.state)>=0;
+  var dist=Math.abs(p2.x-p1.x);
+
+  // --- PER-FRAME: smooth CPU movement toward player ---
+  if(canAct2 && p2.cd<=0){
+    if(dist>80){
+      var moveDir=p2.x>p1.x?-1:1;
+      p2.x+=moveDir*p2.ch.spd*1.1*gs.SC;
+      p2.state='walk';
+    } else {
+      if(p2.state==='walk')p2.state='idle';
+    }
+  }
+
+  // --- TICK-GATED: attack/block decisions ---
   if(p2.cd>0||p2.state==='hurt')return;
   G.cpuTick--;if(G.cpuTick>0)return;
   var react=Math.max(18,80-G.stage*4)+Math.floor(Math.random()*20);
   G.cpuTick=react;
-  var dist=Math.abs(p2.x-p1.x);
   var r=Math.random();
   var aggr=0.28+G.stage*0.047;var blk=0.07+G.stage*0.022;
   if(dist<200){
@@ -383,13 +376,8 @@ function cpuThink(gs){
       var act=opts[Math.floor(Math.random()*opts.length)];
       p2.state=act;p2.af=0;p2.cd={punch:14,kick:20,special:26}[act]||14;
       if(act==='special')p2.energy=0;snd(act);doAttack(p2,p1,act,gs);
-      return;
     }
   }
-  // Move toward player
-  if(p2.x>p1.x+55)p2.x-=p2.ch.spd*1.3*gs.SC;
-  else if(p2.x<p1.x-55)p2.x+=p2.ch.spd*1.3*gs.SC;
-  p2.state='walk';
 }
 
 // End round
@@ -604,8 +592,8 @@ function initVS(){
   ['vs-p1','vs-p2'].forEach(function(id){var el=$(id);el.classList.remove('anim-l','anim-r');void el.offsetWidth;});
   $('vs-p1').classList.add('anim-l');$('vs-p2').classList.add('anim-r');
   snd('start');
-  setTimeout(function(){G.screen='fight';showScreen('fight');initFight();},2500);
-  $('vs-screen').onclick=function(){$('vs-screen').onclick=null;G.screen='fight';showScreen('fight');initFight();};
+  var vsTimer=setTimeout(function(){G.screen='fight';showScreen('fight');initFight();},2500);
+  $('vs-screen').onclick=function(){clearTimeout(vsTimer);$('vs-screen').onclick=null;G.screen='fight';showScreen('fight');initFight();};
 }
 
 // RESULT
@@ -683,7 +671,23 @@ function setupControls(){
     });
   });
 
-  // Prevent context menu and scroll
+  // Keyboard controls for PC/desktop
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowLeft'){KEYS.left=true;KEYS.right=false;e.preventDefault();}
+    else if(e.key==='ArrowRight'){KEYS.right=true;KEYS.left=false;e.preventDefault();}
+    else if(e.key==='ArrowUp'){KEYS.jump=true;e.preventDefault();}
+    else if(e.key==='z'||e.key==='Z'){window._atk&&window._atk('punch');}
+    else if(e.key==='x'||e.key==='X'){window._atk&&window._atk('kick');}
+    else if(e.key==='c'||e.key==='C'){window._atk&&window._atk('special');}
+    else if(e.key==='v'||e.key==='V'){window._atk&&window._atk('block');}
+  });
+  document.addEventListener('keyup',function(e){
+    if(e.key==='ArrowLeft')KEYS.left=false;
+    else if(e.key==='ArrowRight')KEYS.right=false;
+    else if(e.key==='ArrowUp')KEYS.jump=false;
+  });
+
+  // Prevent context menu and scroll on mobile
   document.addEventListener('contextmenu',function(e){e.preventDefault();});
   document.addEventListener('touchmove',function(e){e.preventDefault();},{passive:false});
 }
