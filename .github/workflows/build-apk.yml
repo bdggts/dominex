@@ -70,7 +70,18 @@ jobs:
           echo "SDK: $ANDROID_HOME"
           echo "local.properties: $(cat local.properties)"
           echo "=== Building ==="
-          gradle assembleRelease --no-daemon -x lint --stacktrace 2>&1
+          gradle assembleRelease --no-daemon -x lint --stacktrace 2>&1 | tee /tmp/build.log
+          # Propagate gradle exit code
+          exit ${PIPESTATUS[0]}
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-build-log
+          path: /tmp/build.log
+          if-no-files-found: ignore
+
 
       - name: Sign & package APK
         run: |
