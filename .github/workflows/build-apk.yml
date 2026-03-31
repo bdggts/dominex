@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     permissions:
       contents: write
 
@@ -24,62 +24,68 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Android SDK & install components
+      - name: Install Android SDK from scratch
         run: |
-          # Android SDK is pre-installed on macos runner
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          # Add cmdline-tools to PATH
-          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/tools/bin:$PATH"
-          # Use full path since sdkmanager may not be in default PATH
-          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
-          if [ ! -f "$SDKMANAGER" ]; then
-            SDKMANAGER="$ANDROID_HOME/tools/bin/sdkmanager"
-          fi
-          echo "Using sdkmanager: $SDKMANAGER"
-          yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
-          "$SDKMANAGER" "build-tools;33.0.2" "platforms;android-34" || true
-          ls "$ANDROID_HOME/build-tools/" || true
+          # Download latest cmdline-tools
+          CMDTOOLS="https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
+          mkdir -p $HOME/android-sdk/cmdline-tools
+          wget -q "$CMDTOOLS" -O /tmp/cmdtools.zip
+          unzip -q /tmp/cmdtools.zip -d /tmp/cmdtools_extracted
+          mv /tmp/cmdtools_extracted/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
 
-      - name: Install SDK components
-        run: echo "SDK setup done"
+          # Set ANDROID_HOME for subsequent steps
+          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
 
-      - name: Create local.properties
-        working-directory: android
-        run: echo "sdk.dir=$ANDROID_HOME" > local.properties
+          # Accept licenses + install
+          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk --licenses > /dev/null 2>&1 || true
+          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk \
+            "platforms;android-34" \
+            "build-tools;33.0.2" \
+            "platform-tools"
+
+          echo "SDK installed at $HOME/android-sdk"
+          ls $HOME/android-sdk/platforms/
+          ls $HOME/android-sdk/build-tools/
+
+      - name: Download Gradle 7.6
+        run: |
+          wget -q https://services.gradle.org/distributions/gradle-7.6-bin.zip -O /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /opt/
+          echo "/opt/gradle-7.6/bin" >> $GITHUB_PATH
+          echo "Gradle ready: $(/opt/gradle-7.6/bin/gradle --version | head -1)"
 
       - name: Generate keystore
         run: |
-          keytool -genkey -v -keystore dominex.keystore -alias dominex \
+          keytool -genkey -v -keystore $HOME/dominex.keystore -alias dominex \
             -keyalg RSA -keysize 2048 -validity 36500 \
             -dname "CN=Dominex,OU=Game,O=Dominex,L=IN,S=IN,C=IN" \
-            -storepass DominexGame2026 -keypass DominexGame2026 2>/dev/null || true
+            -storepass DominexGame2026 -keypass DominexGame2026 2>/dev/null
 
       - name: Build Release APK
         working-directory: android
         run: |
-          # Download Gradle 7.6 directly (avoid macOS system gradle version issues)
-          wget -q https://services.gradle.org/distributions/gradle-7.6-bin.zip -O /tmp/gradle76.zip
-          unzip -q /tmp/gradle76.zip -d /tmp/
-          GRADLE=/tmp/gradle-7.6/bin/gradle
-          chmod +x "$GRADLE"
-          
-          # Set SDK paths
-          export ANDROID_SDK_ROOT="$ANDROID_HOME"
-          echo "Gradle: $($GRADLE --version | head -1)"
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "local.properties: $(cat local.properties)"
-          
-          # Build with full stacktrace for debugging
-          "$GRADLE" assembleRelease --no-daemon -x lint --stacktrace 2>&1 | tail -80
+          # Write SDK path
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          cat local.properties
 
+          # Verify gradle is available
+          gradle --version | head -1
 
-      - name: Sign APK
+          # Build (--info for verbose output)
+          gradle assembleRelease --no-daemon -x lint --no-configuration-cache 2>&1
+
+      - name: Find & sign APK
         run: |
-          APK=$(find android/app/build/outputs/apk -name "*.apk" | head -1)
-          echo "Found: $APK"
+          APK=$(find android/app/build/outputs/apk -name "*.apk" 2>/dev/null | head -1)
+          echo "Found APK: $APK"
+          ls -lh "$APK"
+
           SIGNER=$(find "$ANDROID_HOME/build-tools" -name "apksigner" | sort | tail -1)
+          echo "Signer: $SIGNER"
           "$SIGNER" sign \
-            --ks dominex.keystore --ks-key-alias dominex \
+            --ks $HOME/dominex.keystore --ks-key-alias dominex \
             --ks-pass pass:DominexGame2026 --key-pass pass:DominexGame2026 \
             --out public/dominex-arena.apk "$APK"
           ls -lh public/dominex-arena.apk
@@ -89,12 +95,12 @@ jobs:
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
           git add public/dominex-arena.apk
-          git diff --staged --quiet || git commit -m "ci: APK v2.1 signed [skip ci]"
+          git diff --staged --quiet || git commit -m "ci: APK v2.1 [skip ci]"
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: dominex-arena-apk
