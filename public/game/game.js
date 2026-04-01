@@ -414,7 +414,7 @@ function initFight(){
   var eHpMult=1+(G.stage-1)*0.15;
   $('hud-p1-name').textContent=G.player.name;$('hud-p1-name').style.color=G.player.color;
   $('hud-p2-name').textContent=opp.name;$('hud-p2-name').style.color=opp.color;
-  G.cpuTick=0;
+  G.cpuTick=0;G.cpuRetreat=0;
 
   function waitAndInit(attempts) {
     var cv=$('game-canvas');
@@ -434,7 +434,7 @@ function initFight(){
     G.gs={
       p1:{ch:G.player,x:W*0.28,y:FLOOR,vy:0,onGround:true,hp:G.player.hp,maxHp:G.player.hp,energy:0,state:'idle',af:0,cd:0,dir:1,H:Math.round(SC*70),dmgTaken:0},
       p2:{ch:opp,x:W*0.72,y:FLOOR,vy:0,onGround:true,hp:Math.round(opp.hp*eHpMult),maxHp:Math.round(opp.hp*eHpMult),energy:0,state:'idle',af:0,cd:0,dir:-1,H:Math.round(SC*70),dmgTaken:0},
-      timer:99,lastSec:Date.now(),
+      timer:120,lastSec:Date.now(),
       p1r:0,p2r:0,round:1,
       parts:[],shake:0,
       phase:'roundAnnounce',roundAnnTimer:90,
@@ -469,7 +469,7 @@ function abox(f,type){
 function rectsHit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;}
 
 function doAttack(attacker,defender,type,gs){
-  var baseDmg={punch:attacker.ch.pow*1.3+Math.random()*5,kick:attacker.ch.pow*2.1+Math.random()*9,special:attacker.ch.pow*5+Math.random()*16}[type]||12;
+  var baseDmg={punch:attacker.ch.pow*0.8+Math.random()*3,kick:attacker.ch.pow*1.4+Math.random()*5,special:attacker.ch.pow*3.2+Math.random()*10}[type]||8;
   // CPU damage boost per stage
   if(attacker===gs.p2){baseDmg*=1+(G.stage-1)*0.06;}
   var delay={punch:80,kick:130,special:160}[type]||80;
@@ -518,16 +518,37 @@ function playerAttack(type){
 }
 window._atk=playerAttack;
 
-// CPU AI - attacks tick-gated, movement per-frame
+// CPU AI - smart fighter with dodge, block, hit-and-run
 function cpuThink(gs){
   var p1=gs.p1,p2=gs.p2;
   var canAct2=['idle','walk'].indexOf(p2.state)>=0;
   var dist=Math.abs(p2.x-p1.x);
+  var p1Attacking=['punch','kick','special'].indexOf(p1.state)>=0;
 
+  // DODGE: if player attacking and close, back away
+  if(canAct2 && p2.cd<=0 && p1Attacking && dist<150){
+    var escDir=p2.x>p1.x?1:-1;
+    p2.x+=escDir*p2.ch.spd*1.8*gs.SC;
+    p2.x=Math.max(30,Math.min(gs.W-30,p2.x));
+    p2.state='walk';
+    return;
+  }
+
+  // RETREAT after attacking (hit-and-run)
+  if(canAct2 && p2.cd<=0 && G.cpuRetreat>0){
+    var escDir2=p2.x>p1.x?1:-1;
+    p2.x+=escDir2*p2.ch.spd*1.5*gs.SC;
+    p2.x=Math.max(30,Math.min(gs.W-30,p2.x));
+    p2.state='walk';
+    G.cpuRetreat--;
+    return;
+  }
+
+  // APPROACH when far
   if(canAct2 && p2.cd<=0){
-    if(dist>80){
+    if(dist>100){
       var moveDir=p2.x>p1.x?-1:1;
-      p2.x+=moveDir*p2.ch.spd*1.1*gs.SC;
+      p2.x+=moveDir*p2.ch.spd*0.9*gs.SC;
       p2.state='walk';
     } else {
       if(p2.state==='walk')p2.state='idle';
@@ -536,17 +557,22 @@ function cpuThink(gs){
 
   if(p2.cd>0||p2.state==='hurt')return;
   G.cpuTick--;if(G.cpuTick>0)return;
-  var react=Math.max(12,75-G.stage*5)+Math.floor(Math.random()*15);
+  var react=Math.max(20,85-G.stage*4)+Math.floor(Math.random()*25);
   G.cpuTick=react;
   var r=Math.random();
-  var aggr=0.30+G.stage*0.055;var blk=0.08+G.stage*0.028;
+  var aggr=0.25+G.stage*0.04;var blk=0.12+G.stage*0.03;
   if(dist<200){
-    if(r<blk&&p1.state!=='idle'&&p1.state!=='walk'){p2.state='block';p2.cd=8;snd('block');return;}
+    // BLOCK when player is attacking
+    if(p1Attacking && r<blk+0.15){p2.state='block';p2.cd=12;snd('block');return;}
+    // Random block
+    if(r<blk && p1.state!=='idle' && p1.state!=='walk'){p2.state='block';p2.cd=10;snd('block');return;}
     if(r<aggr){
       var opts=['punch','kick'];if(p2.energy>=100)opts.push('special');
       var act=opts[Math.floor(Math.random()*opts.length)];
-      p2.state=act;p2.af=0;p2.cd={punch:14,kick:20,special:26}[act]||14;
+      p2.state=act;p2.af=0;p2.cd={punch:16,kick:22,special:28}[act]||16;
       if(act==='special')p2.energy=0;snd(act);doAttack(p2,p1,act,gs);
+      // After attack, retreat
+      G.cpuRetreat=Math.floor(8+Math.random()*12);
     }
   }
 }
