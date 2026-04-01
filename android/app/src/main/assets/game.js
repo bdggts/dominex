@@ -5,22 +5,22 @@
 // DATA
 // =========================================================
 var CHARS=[
-  {id:'scorpion',name:'SCORPION',title:'Hell Ninja',    color:'#f59e0b',accent:'#fbbf24',hp:100,spd:8,pow:9, def:7, rarity:'Common',   spl:'Spear Pull',  em:'\uD83D\uDD25'},
-  {id:'subzero', name:'SUB-ZERO',title:'Ice Warrior',   color:'#38bdf8',accent:'#7dd3fc',hp:95, spd:7,pow:8, def:9, rarity:'Common',   spl:'Ice Freeze',  em:'\u2744\uFE0F'},
-  {id:'liukang', name:'LIU KANG',title:'Shaolin Monk',  color:'#ef4444',accent:'#fca5a5',hp:90, spd:9,pow:9, def:7, rarity:'Rare',     spl:'Flying Kick', em:'\uD83E\uDD4B'},
-  {id:'raiden',  name:'RAIDEN',  title:'Thunder God',   color:'#8b5cf6',accent:'#c4b5fd',hp:95, spd:6,pow:10,def:9, rarity:'Legendary',spl:'Lightning',   em:'\u26A1'},
-  {id:'reptile', name:'REPTILE', title:'Hidden Fighter', color:'#22c55e',accent:'#86efac',hp:88, spd:9,pow:8, def:7, rarity:'Rare',     spl:'Acid Spit',   em:'\uD83E\uDD8E'},
-  {id:'kitana',  name:'KITANA',  title:'Fan Assassin',  color:'#06b6d4',accent:'#67e8f9',hp:85, spd:10,pow:8,def:6, rarity:'Epic',     spl:'Fan Throw',   em:'\uD83E\uDEAD'},
-  {id:'mileena', name:'MILEENA', title:'Evil Twin',     color:'#f472b6',accent:'#f9a8d4',hp:82, spd:10,pow:9,def:5, rarity:'Rare',     spl:'Sai Throw',   em:'\uD83D\uDDE1\uFE0F'},
-  {id:'jaxon',   name:'JAXON',   title:'Metal Arms',    color:'#78716c',accent:'#d6d3d1',hp:110,spd:5, pow:10,def:10,rarity:'Epic',     spl:'Ground Pound',em:'\uD83E\uDDBE'},
-  {id:'baraka',  name:'BARAKA',  title:'Blade Fighter', color:'#fb923c',accent:'#fdba74',hp:92, spd:7, pow:10,def:8, rarity:'Epic',     spl:'Blade Fury',  em:'\u2694\uFE0F'},
-  {id:'smoke',   name:'SMOKE',   title:'Gray Ninja',    color:'#a78bfa',accent:'#c4b5fd',hp:80, spd:10,pow:9, def:5, rarity:'Rare',     spl:'Smoke Screen', em:'\uD83D\uDCA8'},
-  {id:'cyrax',   name:'CYRAX',   title:'Yellow Robot',  color:'#a3e635',accent:'#d9f99d',hp:88, spd:8, pow:8, def:8, rarity:'Common',   spl:'Net Trap',    em:'\uD83E\uDD16'},
-  {id:'sektor',  name:'SEKTOR',  title:'Red Robot',     color:'#dc2626',accent:'#fca5a5',hp:90, spd:8, pow:9, def:8, rarity:'Epic',     spl:'Missiles',    em:'\uD83D\uDE80'},
-  {id:'kunglao', name:'KUNG LAO',title:'Hat Fighter',   color:'#e2e8f0',accent:'#f1f5f9',hp:88, spd:9, pow:8, def:7, rarity:'Legendary',spl:'Hat Throw',   em:'\uD83C\uDFA9'},
-  {id:'nightwolf',name:'NIGHTWOLF',title:'Spirit Warrior',color:'#84cc16',accent:'#bef264',hp:92,spd:7,pow:9,def:8,rarity:'Mythic',  spl:'Spirit Arrow',em:'\uD83C\uDFF9'},
-  {id:'noob',    name:'NOOB',    title:'Dark Shadow',   color:'#64748b',accent:'#94a3b8',hp:85, spd:9, pow:10,def:6, rarity:'Mythic',   spl:'Shadow Clone',em:'\uD83D\uDC64'},
-  {id:'goro',    name:'GORO',    title:'Final Boss',    color:'#d97706',accent:'#fbbf24',hp:220,spd:4, pow:10,def:10,rarity:'BOSS',     spl:'Stomp Quake', em:'\uD83D\uDC79',boss:true},
+  {id:'scorpion',name:'SCORPION',title:'Hell Ninja',    color:'#f59e0b',accent:'#fbbf24',hp:100,spd:8,pow:9, def:7, rarity:'Common',   spl:'Spear Pull',  em:'\uD83D\uDD25',bW:1.0,bH:1.0},
+  {id:'subzero', name:'SUB-ZERO',title:'Ice Warrior',   color:'#38bdf8',accent:'#7dd3fc',hp:95, spd:7,pow:8, def:9, rarity:'Common',   spl:'Ice Freeze',  em:'\u2744\uFE0F',bW:1.05,bH:1.0},
+  {id:'liukang', name:'LIU KANG',title:'Shaolin Monk',  color:'#ef4444',accent:'#fca5a5',hp:90, spd:9,pow:9, def:7, rarity:'Rare',     spl:'Flying Kick', em:'\uD83E\uDD4B',bW:0.9,bH:1.05},
+  {id:'raiden',  name:'RAIDEN',  title:'Thunder God',   color:'#8b5cf6',accent:'#c4b5fd',hp:95, spd:6,pow:10,def:9, rarity:'Legendary',spl:'Lightning',   em:'\u26A1',bW:1.15,bH:1.1},
+  {id:'reptile', name:'REPTILE', title:'Hidden Fighter', color:'#22c55e',accent:'#86efac',hp:88, spd:9,pow:8, def:7, rarity:'Rare',     spl:'Acid Spit',   em:'\uD83E\uDD8E',bW:0.85,bH:0.92},
+  {id:'kitana',  name:'KITANA',  title:'Fan Assassin',  color:'#06b6d4',accent:'#67e8f9',hp:85, spd:10,pow:8,def:6, rarity:'Epic',     spl:'Fan Throw',   em:'\uD83E\uDEAD',bW:0.8,bH:0.95},
+  {id:'mileena', name:'MILEENA', title:'Evil Twin',     color:'#f472b6',accent:'#f9a8d4',hp:82, spd:10,pow:9,def:5, rarity:'Rare',     spl:'Sai Throw',   em:'\uD83D\uDDE1\uFE0F',bW:0.8,bH:0.95},
+  {id:'jaxon',   name:'JAXON',   title:'Metal Arms',    color:'#78716c',accent:'#d6d3d1',hp:110,spd:5, pow:10,def:10,rarity:'Epic',     spl:'Ground Pound',em:'\uD83E\uDDBE',bW:1.35,bH:1.12},
+  {id:'baraka',  name:'BARAKA',  title:'Blade Fighter', color:'#fb923c',accent:'#fdba74',hp:92, spd:7, pow:10,def:8, rarity:'Epic',     spl:'Blade Fury',  em:'\u2694\uFE0F',bW:1.0,bH:1.05},
+  {id:'smoke',   name:'SMOKE',   title:'Gray Ninja',    color:'#a78bfa',accent:'#c4b5fd',hp:80, spd:10,pow:9, def:5, rarity:'Rare',     spl:'Smoke Screen', em:'\uD83D\uDCA8',bW:0.88,bH:0.95},
+  {id:'cyrax',   name:'CYRAX',   title:'Yellow Robot',  color:'#a3e635',accent:'#d9f99d',hp:88, spd:8, pow:8, def:8, rarity:'Common',   spl:'Net Trap',    em:'\uD83E\uDD16',bW:1.1,bH:1.0},
+  {id:'sektor',  name:'SEKTOR',  title:'Red Robot',     color:'#dc2626',accent:'#fca5a5',hp:90, spd:8, pow:9, def:8, rarity:'Epic',     spl:'Missiles',    em:'\uD83D\uDE80',bW:1.1,bH:1.0},
+  {id:'kunglao', name:'KUNG LAO',title:'Hat Fighter',   color:'#e2e8f0',accent:'#f1f5f9',hp:88, spd:9, pow:8, def:7, rarity:'Legendary',spl:'Hat Throw',   em:'\uD83C\uDFA9',bW:0.95,bH:1.0},
+  {id:'nightwolf',name:'NIGHTWOLF',title:'Spirit Warrior',color:'#84cc16',accent:'#bef264',hp:92,spd:7,pow:9,def:8,rarity:'Mythic',  spl:'Spirit Arrow',em:'\uD83C\uDFF9',bW:1.1,bH:1.05},
+  {id:'noob',    name:'NOOB',    title:'Dark Shadow',   color:'#64748b',accent:'#94a3b8',hp:85, spd:9, pow:10,def:6, rarity:'Mythic',   spl:'Shadow Clone',em:'\uD83D\uDC64',bW:0.92,bH:1.0},
+  {id:'goro',    name:'GORO',    title:'Final Boss',    color:'#d97706',accent:'#fbbf24',hp:220,spd:4, pow:10,def:10,rarity:'BOSS',     spl:'Stomp Quake', em:'\uD83D\uDC79',boss:true,bW:1.6,bH:1.3},
 ];
 var PLAYABLE=CHARS.filter(function(c){return !c.boss;});
 var TOWER_ORDER=['cyrax','reptile','liukang','subzero','kitana','mileena','baraka','smoke','scorpion','kunglao','nightwolf','raiden','sektor','noob','goro'];
@@ -131,7 +131,7 @@ function load(){try{var s=parseInt(localStorage.getItem('dnx_stage')||'1',10);G.
 // =========================================================
 function drawFighter(ctx,f,t){
   var x=f.x,y=f.y,dir=f.dir,c=f.ch.color,ac=f.ch.accent,id=f.ch.id;
-  var H=f.H,st=f.state,af=f.af;
+  var H=f.H*(f.ch.bH||1),st=f.state,af=f.af;
   ctx.save();ctx.translate(x,y);if(dir<0)ctx.scale(-1,1);
 
   var bob=st==='idle'?Math.sin(t*0.08)*3:0;
@@ -143,15 +143,16 @@ function drawFighter(ctx,f,t){
   var squat=block?0.88:1;
   var jumpY=f.vy<-1?-10:f.vy>1?5:0;
   var by=bob+jumpY;
-  var isBoss=id==='goro';
-  var bw=isBoss?40:32; // body width
-  var hw=isBoss?18:13; // head width factor
+  var bwM=f.ch.bW||1;
+  var bw=Math.round(32*bwM);
+  var headR=Math.round(H*0.13*Math.max(bwM,0.95));
+  var shadowR=Math.round(24*bwM);
 
   if(st==='special'){ctx.shadowColor=c;ctx.shadowBlur=22;}
   if(st==='walk'){ctx.rotate(0.08);}
 
   // SHADOW
-  ctx.fillStyle='rgba(0,0,0,0.28)';ctx.beginPath();ctx.ellipse(0,2,isBoss?34:24,6,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(0,0,0,0.28)';ctx.beginPath();ctx.ellipse(0,2,shadowR,6,0,0,Math.PI*2);ctx.fill();
 
   // === CHARACTER AURA (unique per fighter) ===
   if(id==='raiden'){ctx.strokeStyle='rgba(139,92,246,0.3)';ctx.lineWidth=1;for(var li=0;li<3;li++){var lx=(Math.random()-0.5)*40;ctx.beginPath();ctx.moveTo(lx,-H*1.2+by);ctx.lineTo(lx+(Math.random()-0.5)*20,-H*0.3+by);ctx.stroke();}}
@@ -161,7 +162,7 @@ function drawFighter(ctx,f,t){
 
   // LEGS
   ctx.fillStyle=c+'cc';
-  var legW=isBoss?16:13;
+  var legW=Math.round(13*bwM);
   var legSwing=walkPhase*0.4;
   var lly=H*0.44*squat;
   ctx.fillRect(-14+legSwing,-lly+by,legW,lly);
@@ -170,12 +171,12 @@ function drawFighter(ctx,f,t){
 
   // FEET
   ctx.fillStyle=ac;
-  var footW=isBoss?18:15;
+  var footW=Math.round(15*bwM);
   ctx.fillRect(-18+legSwing,by,footW,7);
   ctx.fillRect(3-legSwing+Math.abs(kY)*0.4,kY+by,footW,7);
 
   // === GORO EXTRA LEGS ===
-  if(isBoss){ctx.fillStyle=c+'aa';ctx.fillRect(-20+legSwing,-lly*0.7+by,10,lly*0.7);ctx.fillRect(12-legSwing,-lly*0.7+by,10,lly*0.7);}
+  if(id==='goro'){ctx.fillStyle=c+'aa';ctx.fillRect(-20+legSwing,-lly*0.7+by,10,lly*0.7);ctx.fillRect(12-legSwing,-lly*0.7+by,10,lly*0.7);}
 
   // TORSO
   ctx.fillStyle=c;
@@ -199,18 +200,19 @@ function drawFighter(ctx,f,t){
   if(hurt)ctx.restore();
 
   // ARMS
+  var armW=Math.round(12*bwM),armOff=Math.round(22*bwM);
   ctx.fillStyle=c;
   if(block){
-    ctx.fillRect(-22,-H*0.8+by,14,H*0.3);
-    ctx.fillRect(8,-H*0.76+by,14,H*0.26);
+    ctx.fillRect(-armOff,-H*0.8+by,armW+2,H*0.3);
+    ctx.fillRect(armOff-armW+2,-H*0.76+by,armW+2,H*0.26);
   } else {
-    ctx.fillRect(-22+pX,-H*0.8+by,12,H*0.28);
-    ctx.fillRect(10,-H*0.78+by,12,H*0.26);
-    if(pX>5){ctx.fillStyle=ac;ctx.fillRect(-22+pX,-H*0.53+by,14,10);}
+    ctx.fillRect(-armOff+pX,-H*0.8+by,armW,H*0.28);
+    ctx.fillRect(armOff-armW+2,-H*0.78+by,armW,H*0.26);
+    if(pX>5){ctx.fillStyle=ac;ctx.fillRect(-armOff+pX,-H*0.53+by,armW+2,10);}
   }
 
   // === GORO 4 ARMS ===
-  if(isBoss&&!block){
+  if(id==='goro'&&!block){
     ctx.fillStyle=c+'dd';
     ctx.fillRect(-28+pX*0.6,-H*0.72+by,10,H*0.24);
     ctx.fillRect(18,-H*0.7+by,10,H*0.22);
@@ -234,8 +236,8 @@ function drawFighter(ctx,f,t){
 
   // HEAD
   ctx.shadowBlur=0;
-  ctx.fillStyle=ac;ctx.beginPath();ctx.arc(0,-H*0.9+by,H*(isBoss?0.16:0.13),0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle=c;ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,-H*0.9+by,H*(isBoss?0.16:0.13),0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle=ac;ctx.beginPath();ctx.arc(0,-H*0.9+by,headR,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle=c;ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,-H*0.9+by,headR,0,Math.PI*2);ctx.stroke();
 
   // === NINJA MASK (Scorpion, Sub-Zero, Reptile, Smoke, Noob) ===
   if(id==='scorpion'||id==='subzero'||id==='reptile'||id==='smoke'||id==='noob'){
@@ -833,7 +835,7 @@ function initVS(){
   var opp=TOWER[Math.min(G.stage-1,TOWER.length-1)];
   $('vs-p1-emoji').textContent=G.player.em;$('vs-p1-name').textContent=G.player.name;$('vs-p1-name').style.color=G.player.color;
   $('vs-p2-emoji').textContent=opp.em;$('vs-p2-name').textContent=opp.name;$('vs-p2-name').style.color=opp.color;
-  $('vs-p2-role').textContent=opp.boss?'⚠️ FINAL BOSS':'STAGE '+G.stage+' · CPU';
+  $('vs-p2-role').textContent=opp.boss?'âš ï¸ FINAL BOSS':'STAGE '+G.stage+' Â· CPU';
   $('vs-stage-label').textContent='STAGE '+G.stage+'/15';
   $('vs-bg-l').style.setProperty('--c1',G.player.color+'33');
   $('vs-bg-r').style.setProperty('--c2',opp.color+'33');
@@ -976,3 +978,4 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 
 })();
+

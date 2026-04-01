@@ -1,5 +1,5 @@
 // Dominex Arena Service Worker - Offline Support
-var CACHE_NAME = 'dominex-v2';
+var CACHE_NAME = 'dominex-v4';
 var ASSETS = [
   '/arena',
   '/manifest.json',
