@@ -1024,7 +1024,7 @@ function showResult(win,gs){
   if(win&&!champion){nb.style.display='block';nb.textContent='NEXT STAGE \u25B6 ('+(G.stage+1)+'/15)';}
   else if(champion){nb.style.display='block';nb.textContent='PLAY AGAIN \uD83C\uDFC6';}
   else{nb.style.display='none';}
-  rb.style.display=win?'none':'block';
+  rb.style.display=win?'none':'block';rb.textContent='RETRY FROM STAGE 1';
   document.getElementById('result-screen').style.background=champion?'radial-gradient(ellipse at center,#1a1000,#000)':win?'radial-gradient(ellipse at center,#001400,#000)':'radial-gradient(ellipse at center,#140000,#000)';
   G.screen='result';showScreen('result');
   $('res-next').onclick=function(){
@@ -1036,7 +1036,7 @@ function showResult(win,gs){
       G.screen='select';showScreen('select');initSelect();
     }
   };
-  $('res-retry').onclick=function(){G.screen='fight';showScreen('fight');initFight();};
+  $('res-retry').onclick=function(){G.stage=1;save();G.screen='select';showScreen('select');initSelect();};
   $('res-menu').onclick=function(){G.stage=1;save();G.screen='splash';showScreen('splash');initSplash();};
 }
 
