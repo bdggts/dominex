@@ -196,13 +196,32 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ra
 .vs-fighter.anim-r{animation:vsSlideR .5s ease-out both;}
 @keyframes vsSlideL{from{transform:translateX(-80px);opacity:0}to{transform:translateX(0);opacity:1}}
 @keyframes vsSlideR{from{transform:translateX(80px);opacity:0}to{transform:translateX(0);opacity:1}}
-.vs-emoji{font-size:clamp(50px,12vw,90px);line-height:1;display:block;}
-.vs-name{font-size:clamp(16px,4vw,26px);font-weight:900;letter-spacing:2px;margin-top:8px;}
+.vs-emoji{font-size:clamp(40px,10vw,70px);line-height:1;display:block;}
+.vs-name{font-size:clamp(14px,3.5vw,22px);font-weight:900;letter-spacing:2px;margin-top:6px;}
 .vs-role{font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:2px;}
-.vs-mid{text-align:center;min-width:80px;}
-.vs-text{font-size:clamp(44px,12vw,80px);font-weight:900;color:#ef4444;text-shadow:0 0 40px rgba(239,68,68,0.9),0 0 80px rgba(239,68,68,0.4);line-height:1;animation:vsFlash .6s ease-out both .3s;}
+.vs-mid{text-align:center;min-width:70px;}
+.vs-text{font-size:clamp(36px,10vw,64px);font-weight:900;color:#ef4444;text-shadow:0 0 40px rgba(239,68,68,0.9),0 0 80px rgba(239,68,68,0.4);line-height:1;animation:vsFlash .6s ease-out both .3s;}
 @keyframes vsFlash{0%{opacity:0;transform:scale(1.5)}100%{opacity:1;transform:scale(1)}}
 .vs-stage{font-size:11px;color:#f59e0b;font-weight:700;letter-spacing:1px;margin-top:4px;}
+
+/* Tower Ladder */
+.tower-wrap{position:relative;width:100%;padding:6px 12px;margin-top:8px;}
+.tower-title{text-align:center;font-size:9px;font-weight:900;color:#f59e0b;letter-spacing:3px;margin-bottom:4px;}
+.tower-ladder{display:flex;align-items:center;justify-content:center;gap:2px;flex-wrap:nowrap;}
+.tower-step{display:flex;flex-direction:column;align-items:center;width:22px;position:relative;}
+.tower-em{font-size:14px;line-height:1;opacity:0.3;transition:all .3s;}
+.tower-step.done .tower-em{opacity:0.6;}
+.tower-step.current .tower-em{opacity:1;transform:scale(1.3);}
+.tower-step.current{}
+.tower-bar{width:100%;height:3px;border-radius:2px;margin-top:2px;background:rgba(255,255,255,0.1);}
+.tower-step.done .tower-bar{background:#22c55e;box-shadow:0 0 6px rgba(34,197,94,0.5);}
+.tower-step.current .tower-bar{background:#f59e0b;box-shadow:0 0 8px rgba(245,158,11,0.7);animation:tPulse 1s ease-in-out infinite;}
+.tower-step.boss .tower-em{filter:saturate(1.5);}
+.tower-step.boss.current .tower-bar{background:#ef4444;box-shadow:0 0 10px rgba(239,68,68,0.8);}
+.tower-num{font-size:6px;color:rgba(255,255,255,0.25);font-weight:700;margin-top:1px;}
+.tower-step.current .tower-num{color:#f59e0b;}
+.tower-step.done .tower-num{color:#22c55e;}
+@keyframes tPulse{0%,100%{opacity:1}50%{opacity:0.5}}
 
 /* Result */
 #result-screen{padding:20px;}
@@ -281,6 +300,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ra
           <div class="vs-name" id="vs-p2-name">SUB-ZERO</div>
           <div class="vs-role" id="vs-p2-role">CPU</div>
         </div>
+      </div>
+      <!-- Tower Ladder -->
+      <div class="tower-wrap">
+        <div class="tower-title">TOWER LADDER</div>
+        <div class="tower-ladder" id="tower-ladder"></div>
       </div>
     </div>
 

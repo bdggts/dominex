@@ -708,14 +708,34 @@ function initVS(){
   var opp=TOWER[Math.min(G.stage-1,TOWER.length-1)];
   $('vs-p1-emoji').textContent=G.player.em;$('vs-p1-name').textContent=G.player.name;$('vs-p1-name').style.color=G.player.color;
   $('vs-p2-emoji').textContent=opp.em;$('vs-p2-name').textContent=opp.name;$('vs-p2-name').style.color=opp.color;
-  $('vs-p2-role').textContent=opp.boss?'BOSS !!':'CPU';
+  $('vs-p2-role').textContent=opp.boss?'⚠️ FINAL BOSS':'STAGE '+G.stage+' · CPU';
   $('vs-stage-label').textContent='STAGE '+G.stage+'/15';
   $('vs-bg-l').style.setProperty('--c1',G.player.color+'33');
   $('vs-bg-r').style.setProperty('--c2',opp.color+'33');
   ['vs-p1','vs-p2'].forEach(function(id){var el=$(id);el.classList.remove('anim-l','anim-r');void el.offsetWidth;});
   $('vs-p1').classList.add('anim-l');$('vs-p2').classList.add('anim-r');
+  // Render Tower Ladder
+  var tl=$('tower-ladder');
+  if(tl){
+    var html='';
+    for(var i=0;i<TOWER.length;i++){
+      var t=TOWER[i];
+      var cls='tower-step';
+      if(i<G.stage-1)cls+=' done';
+      else if(i===G.stage-1)cls+=' current';
+      if(t.boss)cls+=' boss';
+      html+='<div class="'+cls+'">';
+      html+='<span class="tower-em">'+t.em+'</span>';
+      html+='<div class="tower-bar"></div>';
+      html+='<span class="tower-num">'+(i+1)+'</span>';
+      html+='</div>';
+    }
+    tl.innerHTML=html;
+  }
   snd('start');
-  var vsTimer=setTimeout(function(){G.screen='fight';showScreen('fight');initFight();},2500);
+  if(opp.boss)announce('Final Boss! '+opp.name,300);
+  else announce('Stage '+G.stage,200);
+  var vsTimer=setTimeout(function(){G.screen='fight';showScreen('fight');initFight();},3000);
   $('vs-screen').onclick=function(){clearTimeout(vsTimer);$('vs-screen').onclick=null;G.screen='fight';showScreen('fight');initFight();};
 }
 
