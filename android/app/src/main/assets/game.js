@@ -302,7 +302,7 @@ function drawFighter(ctx,f,t){
   }
 
   // === GORO CROWN ===
-  if(isBoss){
+  if(id==='goro'){
     ctx.fillStyle='#d97706';
     ctx.fillRect(-10,-H*1.02+by,20,4);
     ctx.fillStyle='#fbbf24';
