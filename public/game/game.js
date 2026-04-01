@@ -593,30 +593,37 @@ function cpuThink(gs){
   var dist=Math.abs(p2.x-p1.x);
   var p1Attacking=['punch','kick','special'].indexOf(p1.state)>=0;
 
-  // DODGE: only 20% chance, not every time
-  if(canAct2 && p2.cd<=0 && p1Attacking && dist<120 && Math.random()<0.15+G.stage*0.01){
+  // DODGE-AFTER-HURT: CPU backs away after getting hit (40% chance)
+  if(p2.state==='hurt' && p2.af>=8 && Math.random()<0.4){
+    var escH=p2.x>p1.x?1:-1;
+    p2.x+=escH*p2.ch.spd*1.5*gs.SC;
+    p2.x=Math.max(30,Math.min(gs.W-30,p2.x));
+  }
+
+  // DODGE: 20-30% chance when player attacks close
+  if(canAct2 && p2.cd<=0 && p1Attacking && dist<120 && Math.random()<0.18+G.stage*0.01){
     var escDir=p2.x>p1.x?1:-1;
-    p2.x+=escDir*p2.ch.spd*1.2*gs.SC;
+    p2.x+=escDir*p2.ch.spd*1.3*gs.SC;
     p2.x=Math.max(30,Math.min(gs.W-30,p2.x));
     p2.state='walk';
     return;
   }
 
-  // RETREAT after attacking (hit-and-run)
+  // RETREAT after attacking (short)
   if(canAct2 && p2.cd<=0 && G.cpuRetreat>0){
     var escDir2=p2.x>p1.x?1:-1;
-    p2.x+=escDir2*p2.ch.spd*1.5*gs.SC;
+    p2.x+=escDir2*p2.ch.spd*1.3*gs.SC;
     p2.x=Math.max(30,Math.min(gs.W-30,p2.x));
     p2.state='walk';
     G.cpuRetreat--;
     return;
   }
 
-  // APPROACH when far
+  // APPROACH when far - FASTER now
   if(canAct2 && p2.cd<=0){
-    if(dist>100){
+    if(dist>80){
       var moveDir=p2.x>p1.x?-1:1;
-      p2.x+=moveDir*p2.ch.spd*0.9*gs.SC;
+      p2.x+=moveDir*p2.ch.spd*1.2*gs.SC;
       p2.state='walk';
     } else {
       if(p2.state==='walk')p2.state='idle';
@@ -625,22 +632,24 @@ function cpuThink(gs){
 
   if(p2.cd>0||p2.state==='hurt')return;
   G.cpuTick--;if(G.cpuTick>0)return;
-  var react=Math.max(20,85-G.stage*4)+Math.floor(Math.random()*25);
+  // Faster reaction
+  var react=Math.max(12,55-G.stage*3)+Math.floor(Math.random()*18);
   G.cpuTick=react;
   var r=Math.random();
-  var aggr=0.25+G.stage*0.04;var blk=0.12+G.stage*0.03;
+  var aggr=0.35+G.stage*0.04;var blk=0.10+G.stage*0.025;
   if(dist<200){
     // BLOCK when player is attacking
-    if(p1Attacking && r<blk+0.15){p2.state='block';p2.cd=12;snd('block');return;}
-    // Random block
-    if(r<blk && p1.state!=='idle' && p1.state!=='walk'){p2.state='block';p2.cd=10;snd('block');return;}
+    if(p1Attacking && r<blk+0.12){p2.state='block';p2.cd=10;snd('block');return;}
+    // Counter-attack after blocking
+    if(p2.state==='block' && Math.random()<0.4){
+      p2.state='punch';p2.af=0;p2.cd=14;snd('punch');doAttack(p2,p1,'punch',gs);return;
+    }
     if(r<aggr){
       var opts=['punch','kick'];if(p2.energy>=100)opts.push('special');
       var act=opts[Math.floor(Math.random()*opts.length)];
-      p2.state=act;p2.af=0;p2.cd={punch:16,kick:22,special:28}[act]||16;
+      p2.state=act;p2.af=0;p2.cd={punch:12,kick:18,special:24}[act]||12;
       if(act==='special')p2.energy=0;snd(act);doAttack(p2,p1,act,gs);
-      // After attack, retreat
-      G.cpuRetreat=Math.floor(3+Math.random()*4);
+      G.cpuRetreat=Math.floor(2+Math.random()*3);
     }
   }
 }
