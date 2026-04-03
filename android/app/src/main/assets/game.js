@@ -40,6 +40,22 @@ var G={
   stopped:false,
   bgInt:null,
 };
+// SPRITE SYSTEM
+var SPRITES={};
+var SPRITE_BASE='sprites/';
+function loadSprite(charId,pose){
+  var key=charId+'_'+pose;
+  if(SPRITES[key])return;
+  var img=new Image();
+  img.src=SPRITE_BASE+key+'.png';
+  img.onload=function(){SPRITES[key]=img;};
+  img.onerror=function(){SPRITES[key]=null;};
+}
+function initSprites(){
+  var poses=['idle','punch','kick','block','hurt'];
+  poses.forEach(function(p){loadSprite('scorpion',p);});
+}
+initSprites();
 var KEYS={left:false,right:false,jump:false};
 
 // =========================================================
@@ -189,6 +205,31 @@ function drawFighter(ctx,f,t){
   var x=f.x,y=f.y,dir=f.dir,c=f.ch.color,ac=f.ch.accent,id=f.ch.id;
   var H=f.H*(f.ch.bH||1),st=f.state,af=f.af;
   var bwM=f.ch.bW||1;
+
+  // TRY SPRITE FIRST
+  var sprPose=st==='walk'?'idle':(st==='special'?'punch':st);
+  var sprKey=id+'_'+sprPose;
+  var spr=SPRITES[sprKey];
+  if(spr){
+    ctx.save();
+    var sprH=H*1.15;
+    var sprW=sprH*(spr.width/spr.height);
+    ctx.translate(x,y);
+    if(dir<0)ctx.scale(-1,1);
+    // Shadow
+    ctx.fillStyle='rgba(0,0,0,0.35)';ctx.beginPath();ctx.ellipse(0,5,sprW*0.35,6,0,0,Math.PI*2);ctx.fill();
+    // Hurt flash
+    if(st==='hurt'&&Math.floor(af/2)%2===0){ctx.globalAlpha=0.5;}
+    // Draw sprite
+    ctx.drawImage(spr,-sprW/2,-sprH,sprW,sprH);
+    ctx.globalAlpha=1;
+    // Special glow
+    if(st==='special'){ctx.fillStyle=c+'44';ctx.beginPath();ctx.arc(sprW*0.4,-sprH*0.45,14,0,Math.PI*2);ctx.fill();}
+    ctx.restore();
+    return;
+  }
+
+  // CANVAS FALLBACK
   ctx.save();ctx.translate(x,y);if(dir<0)ctx.scale(-1,1);
 
   var bob=st==='idle'?Math.sin(t*0.08)*2:0;
