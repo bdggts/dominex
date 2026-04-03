@@ -54,10 +54,10 @@ function removeBlackBG(img){
     for(var i=0;i<px.length;i+=4){
       var r=px[i],g=px[i+1],b=px[i+2];
       var brightness=r*0.299+g*0.587+b*0.114;
-      // Pure black and very dark pixels = transparent
-      if(brightness<35){px[i+3]=0;}
-      // Dark pixels = fade out smoothly
-      else if(brightness<70){px[i+3]=Math.floor((brightness-35)/35*255);}
+      // Only pure black background = transparent
+      if(brightness<15){px[i+3]=0;}
+      // Very near-black edge pixels = soft fade
+      else if(brightness<30){px[i+3]=Math.floor((brightness-15)/15*255);}
     }
     cx.putImageData(d,0,0);
     var cleaned=new Image();
