@@ -43,12 +43,32 @@ var G={
 // SPRITE SYSTEM
 var SPRITES={};
 var SPRITE_BASE='sprites/';
+function removeBlackBG(img){
+  var cv=document.createElement('canvas');
+  cv.width=img.width;cv.height=img.height;
+  var cx=cv.getContext('2d');
+  cx.drawImage(img,0,0);
+  var d=cx.getImageData(0,0,cv.width,cv.height);
+  var px=d.data;
+  for(var i=0;i<px.length;i+=4){
+    var r=px[i],g=px[i+1],b=px[i+2];
+    // Make black/near-black pixels transparent
+    if(r+g+b<80){px[i+3]=0;}
+    // Make dark pixels semi-transparent (smooth edges)
+    else if(r+g+b<140){px[i+3]=Math.floor((r+g+b-80)/60*255);}
+  }
+  cx.putImageData(d,0,0);
+  var cleaned=new Image();
+  cleaned.src=cv.toDataURL();
+  return cleaned;
+}
 function loadSprite(charId,pose){
   var key=charId+'_'+pose;
   if(SPRITES[key])return;
   var img=new Image();
+  img.crossOrigin='anonymous';
   img.src=SPRITE_BASE+key+'.png';
-  img.onload=function(){SPRITES[key]=img;};
+  img.onload=function(){SPRITES[key]=removeBlackBG(img);};
   img.onerror=function(){SPRITES[key]=null;};
 }
 function initSprites(){
