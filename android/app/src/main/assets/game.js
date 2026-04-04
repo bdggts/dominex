@@ -227,16 +227,23 @@ function drawFighter(ctx,f,t){
   // Get animated frame or single sprite
   var spr=null;
   var frames=SPRITE_ANIMS[sprKey];
-  if(frames&&frames.length>0){
-    var animSpeed=st==='idle'?8:st==='walk'?4:3;
-    var frameIdx=Math.floor(t/animSpeed)%frames.length;
-    spr=frames[frameIdx]||frames[0];
+  if(frames){
+    // Find any loaded frame
+    var loadedFrames=[];
+    for(var fi=0;fi<frames.length;fi++){if(frames[fi])loadedFrames.push(frames[fi]);}
+    if(loadedFrames.length>0){
+      var animSpeed=st==='idle'?8:st==='walk'?4:3;
+      var frameIdx=Math.floor(t/animSpeed)%loadedFrames.length;
+      spr=loadedFrames[frameIdx];
+    }
   }
   if(!spr)spr=SPRITES[sprKey];
   // Fallback: block/hurt/walk use idle sprite to avoid canvas character
   if(!spr){
     var idleFrames=SPRITE_ANIMS[id+'_idle'];
-    if(idleFrames&&idleFrames.length>0)spr=idleFrames[0];
+    if(idleFrames){
+      for(var fi2=0;fi2<idleFrames.length;fi2++){if(idleFrames[fi2]){spr=idleFrames[fi2];break;}}
+    }
     if(!spr)spr=SPRITES[id+'_idle'];
   }
   if(spr){
