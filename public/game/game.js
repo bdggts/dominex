@@ -40,66 +40,40 @@ var G={
   stopped:false,
   bgInt:null,
 };
-// SPRITE SYSTEM
+// SPRITE SYSTEM - PixelLab Frame Animation
 var SPRITES={};
+var SPRITE_ANIMS={}; // {charId_pose: [img0, img1, ...]}
 var SPRITE_BASE='sprites/';
-function removeBlackBG(img){
-  try{
-    var cv=document.createElement('canvas');
-    cv.width=img.width;cv.height=img.height;
-    var cx=cv.getContext('2d');
-    cx.drawImage(img,0,0);
-    var d=cx.getImageData(0,0,cv.width,cv.height);
-    var px=d.data;
-    var w=cv.width,h=cv.height;
-    // Mark which pixels are "background" using flood fill from edges
-    var bg=new Uint8Array(w*h);
-    var stack=[];
-    // Seed from all edge pixels
-    for(var ex=0;ex<w;ex++){stack.push(ex);stack.push(0);stack.push(ex);stack.push(h-1);}
-    for(var ey=0;ey<h;ey++){stack.push(0);stack.push(ey);stack.push(w-1);stack.push(ey);}
-    while(stack.length>0){
-      var sy=stack.pop(),sx=stack.pop();
-      if(sx<0||sx>=w||sy<0||sy>=h)continue;
-      var idx=sy*w+sx;
-      if(bg[idx])continue;
-      var pi=idx*4;
-      var bright=px[pi]*0.299+px[pi+1]*0.587+px[pi+2]*0.114;
-      if(bright<22){
-        bg[idx]=1;
-        stack.push(sx-1);stack.push(sy);
-        stack.push(sx+1);stack.push(sy);
-        stack.push(sx);stack.push(sy-1);
-        stack.push(sx);stack.push(sy+1);
-      }
-    }
-    // Now only make bg-marked pixels transparent
-    for(var i=0;i<w*h;i++){
-      if(bg[i]){px[i*4+3]=0;}
-    }
-    cx.putImageData(d,0,0);
-    var cleaned=new Image();
-    cleaned.src=cv.toDataURL();
-    return cleaned;
-  }catch(e){
-    console.log('BG remove failed:',e);
-    return img;
-  }
-}
-function loadSprite(charId,pose){
+var SPRITE_FRAMES={
+  'scorpion_idle':8, 'scorpion_punch':6, 'scorpion_kick':7, 'scorpion_walk':6
+};
+function loadSpriteFrames(charId,pose,count){
   var key=charId+'_'+pose;
-  if(SPRITES[key])return;
-  var img=new Image();
-  img.src=SPRITE_BASE+key+'.png';
-  img.onload=function(){
-    // Small delay to ensure image is fully decoded
-    setTimeout(function(){SPRITES[key]=removeBlackBG(img);},50);
-  };
-  img.onerror=function(){SPRITES[key]=null;};
+  SPRITE_ANIMS[key]=[];
+  for(var i=0;i<count;i++){
+    (function(idx){
+      var img=new Image();
+      img.src=SPRITE_BASE+charId+'_'+pose+'_'+idx+'.png';
+      img.onload=function(){SPRITE_ANIMS[key][idx]=img;};
+      img.onerror=function(){SPRITE_ANIMS[key][idx]=null;};
+    })(i);
+  }
+  // Also load single frame as fallback
+  var single=new Image();
+  single.src=SPRITE_BASE+charId+'_'+pose+'.png';
+  single.onload=function(){SPRITES[key]=single;};
 }
 function initSprites(){
-  var poses=['idle','punch','kick','block','hurt'];
-  poses.forEach(function(p){loadSprite('scorpion',p);});
+  for(var k in SPRITE_FRAMES){
+    var parts=k.split('_');
+    loadSpriteFrames(parts[0],parts[1],SPRITE_FRAMES[k]);
+  }
+  // Load block/hurt as single (if available)
+  ['block','hurt'].forEach(function(p){
+    var img=new Image();
+    img.src=SPRITE_BASE+'scorpion_'+p+'.png';
+    img.onload=function(){SPRITES['scorpion_'+p]=img;};
+  });
 }
 initSprites();
 var KEYS={left:false,right:false,jump:false};
@@ -252,10 +226,19 @@ function drawFighter(ctx,f,t){
   var H=f.H*(f.ch.bH||1),st=f.state,af=f.af;
   var bwM=f.ch.bW||1;
 
-  // TRY SPRITE FIRST
-  var sprPose=st==='walk'?'idle':(st==='special'?'punch':st);
+  // TRY SPRITE FIRST (Frame Animation)
+  var sprPose=st==='special'?'punch':st;
   var sprKey=id+'_'+sprPose;
-  var spr=SPRITES[sprKey];
+  // Get animated frame or single sprite
+  var spr=null;
+  var frames=SPRITE_ANIMS[sprKey];
+  if(frames&&frames.length>0){
+    var animSpeed=st==='idle'?8:st==='walk'?4:3;
+    var frameIdx=Math.floor(t/animSpeed)%frames.length;
+    spr=frames[frameIdx]||frames[0];
+  }
+  if(!spr)spr=SPRITES[sprKey];
+  if(!spr&&st==='walk')spr=SPRITES[id+'_idle']; // walk fallback to idle
   if(spr){
     ctx.save();
     var sprH=H*1.15;
