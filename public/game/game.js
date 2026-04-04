@@ -269,10 +269,8 @@ function drawFighter(ctx,f,t){
     if(st==='hurt'){
       ctx.save();
       ctx.translate(Math.sin(af*2)*4,0); // shake
-      if(Math.floor(af/2)%2===0){ctx.globalAlpha=0.4;}
+      if(Math.floor(af/2)%2===0){ctx.globalAlpha=0.35;}
       ctx.drawImage(spr,-sprW/2,-sprH+bob,sprW,sprH);
-      ctx.globalAlpha=0.3;ctx.fillStyle='#ff0000';
-      ctx.fillRect(-sprW/2,-sprH+bob,sprW,sprH);
       ctx.globalAlpha=1;
       ctx.restore();
     }
