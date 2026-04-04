@@ -207,27 +207,8 @@ function save(){try{localStorage.setItem('dnx_stage',G.stage);}catch(e){}}
 function load(){try{var s=parseInt(localStorage.getItem('dnx_stage')||'1',10);G.stage=isNaN(s)||s<1?1:Math.min(s,15);}catch(e){}}
 
 // =========================================================
-// CANVAS DRAWING - PREMIUM MK-STYLE CHARACTERS
+// SPRITE RENDERING
 // =========================================================
-function drawLimb(ctx,x1,y1,x2,y2,w,col,highlight){
-  // Thick limb with subtle 3D effect
-  ctx.strokeStyle=col;ctx.lineWidth=w;ctx.lineCap='round';
-  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
-  // Highlight edge for 3D
-  if(highlight){
-    ctx.strokeStyle=highlight;ctx.lineWidth=Math.max(1,w*0.3);
-    ctx.beginPath();ctx.moveTo(x1-1,y1);ctx.lineTo(x2-1,y2);ctx.stroke();
-  }
-}
-function drawJoint(ctx,x,y,r,col){
-  ctx.fillStyle=col;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
-}
-function lighter(col,amt){
-  // Simple hex lighten
-  try{var r=parseInt(col.slice(1,3),16),g=parseInt(col.slice(3,5),16),b=parseInt(col.slice(5,7),16);
-  return'rgb('+Math.min(255,r+amt)+','+Math.min(255,g+amt)+','+Math.min(255,b+amt)+')';}catch(e){return col;}
-}
-
 function drawFighter(ctx,f,t){
   var x=f.x,y=f.y,dir=f.dir,c=f.ch.color,ac=f.ch.accent,id=f.ch.id;
   var H=f.H*(f.ch.bH||1),st=f.state,af=f.af;
