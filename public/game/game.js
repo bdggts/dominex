@@ -49,7 +49,8 @@ var SPRITE_FRAMES={
   'subzero_idle':8, 'subzero_punch':6, 'subzero_kick':6, 'subzero_walk':6,
   'liukang_idle':8, 'liukang_punch':6, 'liukang_kick':6, 'liukang_walk':6,
   'raiden_idle':8, 'raiden_punch':6, 'raiden_kick':7, 'raiden_walk':6,
-  'reptile_idle':8, 'reptile_punch':6, 'reptile_kick':7, 'reptile_walk':6
+  'reptile_idle':8, 'reptile_punch':6, 'reptile_kick':7, 'reptile_walk':6,
+  'kitana_idle':8, 'kitana_punch':6, 'kitana_kick':7, 'kitana_walk':6
 };
 function loadSpriteFrames(charId,pose,count){
   var key=charId+'_'+pose;
