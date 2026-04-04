@@ -45,7 +45,8 @@ var SPRITES={};
 var SPRITE_ANIMS={}; // {charId_pose: [img0, img1, ...]}
 var SPRITE_BASE='sprites/';
 var SPRITE_FRAMES={
-  'scorpion_idle':8, 'scorpion_punch':6, 'scorpion_kick':7, 'scorpion_walk':6
+  'scorpion_idle':8, 'scorpion_punch':6, 'scorpion_kick':7, 'scorpion_walk':6,
+  'subzero_idle':8, 'subzero_punch':6, 'subzero_kick':6, 'subzero_walk':6
 };
 function loadSpriteFrames(charId,pose,count){
   var key=charId+'_'+pose;
