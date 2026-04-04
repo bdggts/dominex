@@ -55,7 +55,9 @@ var SPRITE_FRAMES={
   'jaxon_idle':8, 'jaxon_punch':6, 'jaxon_kick':7, 'jaxon_walk':6,
   'baraka_idle':8, 'baraka_punch':6, 'baraka_kick':7, 'baraka_walk':6,
   'smoke_idle':8, 'smoke_punch':6, 'smoke_kick':7, 'smoke_walk':6,
-  'cyrax_idle':8, 'cyrax_punch':6, 'cyrax_kick':7, 'cyrax_walk':6
+  'cyrax_idle':8, 'cyrax_punch':6, 'cyrax_kick':7, 'cyrax_walk':6,
+  'sektor_idle':8, 'sektor_punch':6, 'sektor_kick':7, 'sektor_walk':6,
+  'kunglao_idle':8, 'kunglao_punch':6, 'kunglao_kick':7, 'kunglao_walk':6
 };
 function loadSpriteFrames(charId,pose,count){
   var key=charId+'_'+pose;
