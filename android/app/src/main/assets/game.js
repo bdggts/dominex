@@ -219,13 +219,13 @@ function drawFighter(ctx,f,t){
   var bwM=f.ch.bW||1;
 
   // TRY SPRITE FIRST (Frame Animation)
-  var sprPose=st==='special'?'punch':st;
+  var sprPose=st==='special'?'punch':(st==='block'||st==='hurt')?'idle':st;
   var sprKey=id+'_'+sprPose;
   // Get animated frame or single sprite
   var spr=null;
   var frames=SPRITE_ANIMS[sprKey];
-  if(frames){
-    // Find any loaded frame
+  if(frames && frames.length>0){
+    // Find loaded frames (async loads)
     var loadedFrames=[];
     for(var fi=0;fi<frames.length;fi++){if(frames[fi])loadedFrames.push(frames[fi]);}
     if(loadedFrames.length>0){
@@ -235,13 +235,14 @@ function drawFighter(ctx,f,t){
     }
   }
   if(!spr)spr=SPRITES[sprKey];
-  // Fallback: block/hurt/walk use idle sprite to avoid canvas character
+  // Fallback: try idle sprite
   if(!spr){
-    var idleFrames=SPRITE_ANIMS[id+'_idle'];
-    if(idleFrames){
+    var idleKey=id+'_idle';
+    var idleFrames=SPRITE_ANIMS[idleKey];
+    if(idleFrames && idleFrames.length>0){
       for(var fi2=0;fi2<idleFrames.length;fi2++){if(idleFrames[fi2]){spr=idleFrames[fi2];break;}}
     }
-    if(!spr)spr=SPRITES[id+'_idle'];
+    if(!spr)spr=SPRITES[idleKey];
   }
   if(spr){
     ctx.save();
