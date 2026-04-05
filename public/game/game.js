@@ -698,17 +698,17 @@ function cpuThink(gs){
   var ai=G.cpuAI;
 
   // === TRACK PLAYER PRESSURE (spam detection) ===
-  if(p1Attacking&&dist<140){ai.pressure=Math.min(10,ai.pressure+1);ai.pressureTimer=45;}
-  if(ai.pressureTimer>0){ai.pressureTimer--;}else{ai.pressure=Math.max(0,ai.pressure-0.3);}
+  if(p1Attacking&&dist<140){ai.pressure=Math.min(10,ai.pressure+0.5);ai.pressureTimer=45;}
+  if(ai.pressureTimer>0){ai.pressureTimer--;}else{ai.pressure=Math.max(0,ai.pressure-0.5);}
 
   // === STATE TRANSITIONS ===
-  // Player spamming → RETREAT
-  if(ai.pressure>=4&&ai.state==='engage'){
-    ai.state='retreat';ai.stateTimer=40+Math.floor(Math.random()*30);ai.waitTimer=0;
+  // Player spamming (6+ hits) → retreat a little
+  if(ai.pressure>=6&&ai.state==='engage'){
+    ai.state='retreat';ai.stateTimer=12+Math.floor(Math.random()*10);ai.waitTimer=0;
   }
-  // Done retreating → WAIT
+  // Done retreating → WAIT briefly
   if(ai.state==='retreat'&&ai.stateTimer<=0){
-    ai.state='wait';ai.waitTimer=35+Math.floor(Math.random()*45);
+    ai.state='wait';ai.waitTimer=20+Math.floor(Math.random()*20);
   }
   // Player walks into range while waiting → PUNISH
   if(ai.state==='wait'&&dist<105){
@@ -732,10 +732,10 @@ function cpuThink(gs){
     p2.x=Math.max(30,Math.min(gs.W-30,p2.x));
   }
 
-  // === RETREAT STATE: back away fast ===
+  // === RETREAT STATE: step back slowly (few steps only) ===
   if(ai.state==='retreat'&&canAct2&&p2.cd<=0){
     var rDir=p2.x>p1.x?1:-1;
-    p2.x+=rDir*p2.ch.spd*2.2*gs.SC;
+    p2.x+=rDir*p2.ch.spd*0.8*gs.SC; // slow small steps back
     p2.x=Math.max(30,Math.min(gs.W-30,p2.x));
     p2.state='walk';
     return;
