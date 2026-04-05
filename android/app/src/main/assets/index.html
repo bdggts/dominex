@@ -44,6 +44,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ra
 /* XP display */
 .res-xp{display:inline-flex;align-items:center;gap:6px;margin-top:12px;padding:6px 20px;border-radius:20px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.22);font-size:13px;font-weight:900;color:#f59e0b;letter-spacing:1px;font-family:'Orbitron',sans-serif;}
 </style>
+<style>
 /* ── LAYOUT ─────────────────────────────────────── */
 #app{position:fixed;inset:0;display:flex;flex-direction:column;background:#000;}
 #screens{position:absolute;inset:0;z-index:10;pointer-events:none;}
@@ -158,8 +159,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Ra
 
 /* Splash */
 #splash{background:#000;}
-#splash canvas{position:absolute;inset:0;width:100%;height:100%;}
-.splash-content{position:relative;z-index:2;text-align:center;width:100%;}
+#splash-canvas{position:absolute;inset:0;width:100%;height:100%;}
+.splash-content{
+  position:relative;z-index:2;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  width:100%;height:100%;text-align:center;
+  padding:20px;
+}
 .splash-logo{font-size:clamp(40px,10vw,80px);font-weight:900;color:#f59e0b;letter-spacing:6px;text-shadow:0 0 40px rgba(245,158,11,0.7),0 0 80px rgba(245,158,11,0.3);line-height:1;}
 .splash-sub{font-size:clamp(16px,4vw,28px);color:#fff;letter-spacing:8px;margin-top:4px;opacity:0.6;}
 .play-btn{
