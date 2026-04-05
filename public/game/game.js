@@ -44,7 +44,6 @@ var G={
 var SPRITES={};
 var SPRITE_ANIMS={}; // {charId_pose: [img0, img1, ...]}
 var SPRITE_BASE='sprites/';
-var SPRITE_V='?v='+Date.now(); // cache buster
 var SPRITE_FRAMES={
   'scorpion_idle':8, 'scorpion_punch':6, 'scorpion_kick':7, 'scorpion_walk':6,
   'subzero_idle':8, 'subzero_punch':6, 'subzero_kick':6, 'subzero_walk':6,
@@ -69,14 +68,14 @@ function loadSpriteFrames(charId,pose,count){
   for(var i=0;i<count;i++){
     (function(idx){
       var img=new Image();
-      img.src=SPRITE_BASE+charId+'_'+pose+'_'+idx+'.png'+SPRITE_V;
+      img.src=SPRITE_BASE+charId+'_'+pose+'_'+idx+'.png';
       img.onload=function(){SPRITE_ANIMS[key][idx]=img;};
       img.onerror=function(){SPRITE_ANIMS[key][idx]=null;};
     })(i);
   }
   // Also load single frame as fallback
   var single=new Image();
-  single.src=SPRITE_BASE+charId+'_'+pose+'.png'+SPRITE_V;
+  single.src=SPRITE_BASE+charId+'_'+pose+'.png';
   single.onload=function(){SPRITES[key]=single;};
 }
 function initSprites(){
@@ -1032,10 +1031,20 @@ function initSelect(){
     d.appendChild(nm);
     var dot=document.createElement('div');dot.className='char-dot';
     d.appendChild(dot);
+    d.setAttribute('data-idx',i);
     d.addEventListener('pointerdown',function(){G.selIdx=i;snd('select');updatePreview();updateGrid();});
     grid.appendChild(d);
   });
   updateGrid();updatePreview();
+  // Auto-refresh previews as sprites load async
+  var _refreshCount=0;
+  var _refreshInt=setInterval(function(){
+    _refreshCount++;
+    var canvases=document.querySelectorAll('.cem-canvas');
+    canvases.forEach(function(cv,i){if(i<PLAYABLE.length)drawCharPreview(cv,PLAYABLE[i],40);});
+    updatePreview();
+    if(_refreshCount>=30)clearInterval(_refreshInt); // stop after 3s
+  },100);
   $('select-btn').onclick=function(){
     G.player=PLAYABLE[G.selIdx];snd('start');
     G.screen='vs';showScreen('vs');initVS();
