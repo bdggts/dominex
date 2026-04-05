@@ -979,6 +979,13 @@ function initSplash(){
     for(var i=0;i<30;i++){var sx=((i*W/30+t*0.4*(i%2?1:-1))%W+W)%W,sy=H*0.08+Math.sin(t*0.018+i*0.9)*H*0.38;ctx.fillStyle='rgba(245,158,11,'+(0.15+0.25*Math.sin(t*0.06+i))+')';ctx.beginPath();ctx.arc(sx,sy,1+Math.sin(t*0.07+i)*1,0,Math.PI*2);ctx.fill();}
   }
   frame();
+  // Reset play button in case user came back from a fight
+  var _btn=$('play-btn');
+  _btn.textContent='⚔️ PLAY NOW';
+  _btn.disabled=false;
+  _btn.style.opacity='1';
+  var _oldPb=$('sprite-pb-wrap');
+  if(_oldPb)_oldPb.parentNode.removeChild(_oldPb);
   $('play-btn').onclick=function(){
     cancelAnimationFrame(raf);
     snd('start');
