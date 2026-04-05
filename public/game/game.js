@@ -44,6 +44,9 @@ var G={
 var SPRITES={};
 var SPRITE_ANIMS={}; // {charId_pose: [img0, img1, ...]}
 var SPRITE_BASE='sprites/';
+var SPRITES_TOTAL=0, SPRITES_LOADED=0;
+var SPRITES_READY=false;
+function onSpriteLoaded(){SPRITES_LOADED++;if(SPRITES_LOADED>=SPRITES_TOTAL){SPRITES_READY=true;if(window._spriteReadyCb){window._spriteReadyCb();window._spriteReadyCb=null;}}}
 var SPRITE_FRAMES={
   'scorpion_idle':8, 'scorpion_punch':6, 'scorpion_kick':7, 'scorpion_walk':6,
   'subzero_idle':8, 'subzero_punch':6, 'subzero_kick':6, 'subzero_walk':6,
@@ -65,18 +68,20 @@ var SPRITE_FRAMES={
 function loadSpriteFrames(charId,pose,count){
   var key=charId+'_'+pose;
   SPRITE_ANIMS[key]=[];
+  SPRITES_TOTAL+=count+1; // frames + single
   for(var i=0;i<count;i++){
     (function(idx){
       var img=new Image();
       img.src=SPRITE_BASE+charId+'_'+pose+'_'+idx+'.png';
-      img.onload=function(){SPRITE_ANIMS[key][idx]=img;};
-      img.onerror=function(){SPRITE_ANIMS[key][idx]=null;};
+      img.onload=function(){SPRITE_ANIMS[key][idx]=img;onSpriteLoaded();};
+      img.onerror=function(){SPRITE_ANIMS[key][idx]=null;onSpriteLoaded();};
     })(i);
   }
   // Also load single frame as fallback
   var single=new Image();
   single.src=SPRITE_BASE+charId+'_'+pose+'.png';
-  single.onload=function(){SPRITES[key]=single;};
+  single.onload=function(){SPRITES[key]=single;onSpriteLoaded();};
+  single.onerror=function(){onSpriteLoaded();};
 }
 function initSprites(){
   for(var k in SPRITE_FRAMES){
@@ -1007,7 +1012,31 @@ function initSplash(){
   $('play-btn').onclick=function(){
     cancelAnimationFrame(raf);
     snd('start');
-    G.screen='select';showScreen('select');initSelect();
+    if(SPRITES_READY){
+      G.screen='select';showScreen('select');initSelect();
+    } else {
+      // Show loading bar and wait
+      var btn=$('play-btn');
+      btn.textContent='Loading Sprites...';
+      btn.disabled=true;
+      btn.style.opacity='0.7';
+      // Add progress bar
+      var pb=document.createElement('div');
+      pb.id='sprite-pb-wrap';
+      pb.style.cssText='width:200px;height:6px;background:rgba(255,255,255,0.15);border-radius:3px;margin:12px auto 0;overflow:hidden;';
+      var pbFill=document.createElement('div');
+      pbFill.style.cssText='height:100%;background:linear-gradient(90deg,#f59e0b,#ef4444);border-radius:3px;width:0%;transition:width 0.2s;';
+      pb.appendChild(pbFill);
+      btn.parentNode.insertBefore(pb,btn.nextSibling);
+      var _pbInt=setInterval(function(){
+        var pct=SPRITES_TOTAL>0?Math.round(SPRITES_LOADED/SPRITES_TOTAL*100):0;
+        pbFill.style.width=pct+'%';
+        if(SPRITES_READY){
+          clearInterval(_pbInt);
+          G.screen='select';showScreen('select');initSelect();
+        }
+      },100);
+    }
   };
 }
 
