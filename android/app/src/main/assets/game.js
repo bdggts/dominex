@@ -662,10 +662,9 @@ function doAttack(attacker,defender,type,gs){
       var kb=blocked?3:(type==='special'?18:type==='kick'?12:6);
       defender.x+=attacker.dir*kb;
       defender.x=Math.max(30,Math.min(gs.W-30,defender.x));
-      // FLOATING DAMAGE TEXT
+      // FLOATING DAMAGE TEXT (no combo - combo shown in center)
       var ftxt=blocked?'BLOCKED!':dmg+' DMG';
       var fcol=blocked?'#60a5fa':(type==='special'?'#fbbf24':'#fff');
-      if(COMBO.count>=3)ftxt=dmg+' COMBO x'+COMBO.count+'!';
       gs.floatTexts.push({x:defender.x,y:defender.y-defender.H*0.7,text:ftxt,color:fcol,life:60,vy:-1.5});
       if(gs.finishHim&&defender.hp<=0){
         gs.finishHim=false;
