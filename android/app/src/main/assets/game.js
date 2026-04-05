@@ -162,12 +162,14 @@ function _getVoice(){
   return _voices[0]||null;
 }
 if(window.speechSynthesis)try{speechSynthesis.onvoiceschanged=function(){_voices=speechSynthesis.getVoices();};}catch(e){}
+function toSpeech(t){// Convert ALL CAPS to Title Case for natural speech
+  return t.replace(/\b[A-Z]+\b/g,function(w){return w.charAt(0)+w.slice(1).toLowerCase();});}
 function announce(text,delayMs){
   setTimeout(function(){
     try{
       if(!window.speechSynthesis)return;
       speechSynthesis.cancel();
-      var u=new SpeechSynthesisUtterance(text);
+      var u=new SpeechSynthesisUtterance(toSpeech(text));
       u.rate=0.72;u.pitch=0.35;u.volume=1;
       var v=_getVoice();if(v)u.voice=v;
       speechSynthesis.speak(u);
